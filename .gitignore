@@ -1,0 +1,7 @@
+/*
+/*/
+!/order-internet-service/
+!.gitignore
+!/order-tv-service/
+!/payment/
+/**/generated/
