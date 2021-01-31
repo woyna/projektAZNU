@@ -1,0 +1,138 @@
+openapi: 3.0.1
+info:
+  title: Ordering media micro service
+  description: Micro service to order media services (TV + internet)
+  contact:
+    email: supportm@bp.org
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+- url: http://localhost:8090
+tags:
+- name: media
+  description: Media services which you can order
+paths:
+  /media:
+    post:
+      tags:
+      - media
+      summary: Ordering media services
+      operationId: orderMedia
+      requestBody:
+        description: Details of media services which you are ordering
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderMediaRequest'
+        required: true
+      responses:
+        400:
+          description: Problem during processing of the order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExceptionResponse'
+
+components:
+  schemas:
+    OrderInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        cost:
+          type: number
+    Household:
+      type: object
+      properties:
+        city:
+          type: string
+        address:
+          type: string
+        zipCode:
+          type: string
+    TVService:
+      type: object
+      properties:
+        provider:
+          type: string
+        type:
+          $ref: '#/components/schemas/TVType'
+    TVType:
+      type: string
+      enum:
+        - TERRESTRIAL
+        - SATELLITE
+        - CABLE
+    PaymentCard:
+      type: object
+      properties:
+        name:
+          type: string
+        validTo:
+          type: string
+        number:
+          type: string
+    InternetBroadband:
+      type: string
+      enum:
+        - ADSL
+        - FIBRE_OPTIC
+        - CABLE
+        - MOBILE
+    InternetService:
+      type: object
+      properties:
+        provider:
+          type: string
+        broadband:
+          $ref: '#/components/schemas/InternetBroadband'
+        speed:
+          type: integer
+    OrderTVRequest:
+      type: object
+      properties:
+        household:
+          $ref: '#/components/schemas/Household'
+        tvService:
+          $ref: '#/components/schemas/TVService'
+        installmentDate:
+          type: string
+          format: date-time          
+    OrderInternetRequest:
+      type: object
+      properties:
+        household:
+          $ref: '#/components/schemas/Household'
+        internetService:
+          $ref: '#/components/schemas/InternetService'
+        installmentDate:
+          type: string
+          format: date-time
+    OrderMediaRequest:
+      type: object
+      properties:
+        household:
+          $ref: '#/components/schemas/Household'
+        tvService:
+          $ref: '#/components/schemas/TVService'
+        tvInstallmentDate:
+          type: string
+          format: date-time
+        internetService:
+          $ref: '#/components/schemas/InternetService'
+        internetInstallmentDate:
+          type: string
+          format: date-time
+        paymentCard:
+          $ref: '#/components/schemas/PaymentCard'
+    ExceptionResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        message:
+          type: string
