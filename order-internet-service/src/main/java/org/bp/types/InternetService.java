@@ -1,5 +1,6 @@
 package org.bp.types;
 
+import java.math.BigDecimal;
 
 public class InternetService {
 
@@ -26,4 +27,30 @@ public class InternetService {
 		this.speed = speed;
 	}
 	
+	public BigDecimal calcCost() {
+		int cost = 0;
+		
+		switch (broadband) {
+			case ADSL:
+				cost += 400;
+			case FIBRE_OPTIC:
+				cost += 600;
+			case CABLE:
+				cost += 250;
+			case MOBILE:
+				cost += 100;
+		}
+		
+		if (speed < 100) {
+			cost += 50;
+		}
+		else if (speed < 300) {
+			cost += 100;
+		}
+		else {
+			cost += 150;
+		}
+		
+		return new BigDecimal(cost);
+	}
 }
