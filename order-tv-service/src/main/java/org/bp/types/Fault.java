@@ -1,7 +1,5 @@
 package org.bp.types;
 
-
-
 public class Fault extends Exception {
 
     protected int code;
