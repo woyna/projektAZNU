@@ -1,6 +1,5 @@
 package org.bp.payment;
 
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Random;
@@ -34,12 +33,8 @@ public class PaymentService {
 			@ApiResponse(responseCode = "400", description = "Bad Request", content = {
 					@Content(mediaType = "application/json", schema = @Schema(implementation = ExceptionResponse.class)) }) })
 	public PaymentResponse payment(@org.springframework.web.bind.annotation.RequestBody PaymentRequest paymentRequest) {
-		if (paymentRequest != null && paymentRequest.getAmount() != null
-				&& paymentRequest.getAmount().getValue() != null
-				&& paymentRequest.getAmount().getValue().compareTo(new BigDecimal(0)) < 0) {
 
-			throw new PaymentException("Amount value can not be negative");
-		}
+		ExceptionHandler.validateRequest(paymentRequest);
 
 		PaymentResponse paymentResponse = new PaymentResponse();
 		paymentResponse.setTransactionDate(new Date());
@@ -60,7 +55,7 @@ public class PaymentService {
 		if (response == null) {
 			throw new PaymentException("Payment " + id + " not found");
 		}
-		
+
 		return response;
 	}
 
@@ -74,5 +69,4 @@ public class PaymentService {
 
 		return id;
 	}
-
 }
