@@ -38,19 +38,19 @@ public class ExceptionHandler {
 		Matcher matcher = pattern.matcher(currency);
 
 		if (!matcher.find()) {
-			throw new PaymentException("Currency must match following format: ABC");
+			throw new PaymentException("Invalid currency format. Accepted format: ABC");
 		}
 	}
 
 	private static void validatePaymentCard(PaymentCard paymentCard) throws PaymentException {
-		if (paymentCard.getName() == null) {
-			throw new PaymentException("Payment card name cannot be null");
+		if (paymentCard.getName() == null || paymentCard.getName().isEmpty()) {
+			throw new PaymentException("Payment card name cannot be null or empty");
 		}
-		if (paymentCard.getNumber() == null) {
-			throw new PaymentException("Payment card number cannot be null");
+		if (paymentCard.getNumber() == null || paymentCard.getNumber().isEmpty()) {
+			throw new PaymentException("Payment card number cannot be null or empty");
 		}
-		if (paymentCard.getValidTo() == null) {
-			throw new PaymentException("Payment card Valid To cannot be null");
+		if (paymentCard.getValidTo() == null || paymentCard.getValidTo().isEmpty()) {
+			throw new PaymentException("Payment card Valid To cannot be null or empty");
 		}
 		validateNumber(paymentCard.getNumber());
 		validateValidTo(paymentCard.getValidTo());
@@ -70,7 +70,7 @@ public class ExceptionHandler {
 		Matcher matcher = pattern.matcher(validToStr);
 
 		if (!matcher.find()) {
-			throw new PaymentException("Invalid payment card Valid To format. Accepted: 00/00 or 00/0000");
+			throw new PaymentException("Invalid payment card Valid To format. Accepted format: 00/00 or 00/0000");
 		}
 
 		if (validToStr.length() < 7) {

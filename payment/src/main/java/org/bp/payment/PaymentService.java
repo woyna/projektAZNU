@@ -33,13 +33,13 @@ public class PaymentService {
 			@ApiResponse(responseCode = "400", description = "Bad Request", content = {
 					@Content(mediaType = "application/json", schema = @Schema(implementation = ExceptionResponse.class)) }) })
 	public PaymentResponse payment(@org.springframework.web.bind.annotation.RequestBody PaymentRequest paymentRequest) {
-
 		ExceptionHandler.validateRequest(paymentRequest);
 
 		PaymentResponse paymentResponse = new PaymentResponse();
 		paymentResponse.setTransactionDate(new Date());
 		paymentResponse.setTransactionId(getPaymentId(payments));
 		payments.put(paymentResponse.getTransactionId(), paymentResponse);
+		
 		return paymentResponse;
 	}
 
