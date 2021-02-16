@@ -13,11 +13,13 @@
 package org.bp.media.model;
 
 import java.util.Objects;
+
+import javax.xml.datatype.XMLGregorianCalendar;
+
 import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import java.time.OffsetDateTime;
 import org.bp.media.model.Household;
 import org.bp.media.model.InternetService;
 /**
@@ -33,7 +35,7 @@ public class OrderInternetRequest {
   private InternetService internetService = null;
 
   @JsonProperty("installmentDate")
-  private OffsetDateTime installmentDate = null;
+  private XMLGregorianCalendar installmentDate = null;
 
   public OrderInternetRequest household(Household household) {
     this.household = household;
@@ -69,7 +71,7 @@ public class OrderInternetRequest {
     this.internetService = internetService;
   }
 
-  public OrderInternetRequest installmentDate(OffsetDateTime installmentDate) {
+  public OrderInternetRequest installmentDate(XMLGregorianCalendar installmentDate) {
     this.installmentDate = installmentDate;
     return this;
   }
@@ -78,11 +80,11 @@ public class OrderInternetRequest {
    * Get installmentDate
    * @return installmentDate
   **/
-  public OffsetDateTime getInstallmentDate() {
+  public XMLGregorianCalendar getInstallmentDate() {
     return installmentDate;
   }
 
-  public void setInstallmentDate(OffsetDateTime installmentDate) {
+  public void setInstallmentDate(XMLGregorianCalendar installmentDate) {
     this.installmentDate = installmentDate;
   }
 

@@ -1,28 +1,73 @@
 package org.bp.media;
 
 import static org.apache.camel.model.rest.RestParamType.body;
+
+import java.io.File;
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
+
+import javax.xml.namespace.QName;
 
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.language.bean.Bean;
 import org.apache.camel.model.dataformat.JsonLibrary;
 import org.apache.camel.model.rest.RestBindingMode;
+import org.apache.camel.util.json.JsonObject;
 import org.bp.media.model.OrderMediaRequest;
+import org.bp.media.model.PaymentRequest;
+import org.bp.media.model.PaymentResponse;
+import org.bp.media.model.TVOrder;
 import org.bp.media.model.TVType;
+import org.bp.media.model.Internet_Fault_Exception;
+import org.bp.media.clients.OrderInternetService;
+import org.bp.media.clients.OrderInternetServiceService;
+import org.bp.media.clients.OrderTvService;
+import org.bp.media.clients.OrderTvServiceService;
 import org.bp.media.exceptions.InternetServiceException;
 import org.bp.media.exceptions.TVOrderException;
+import org.bp.media.model.Amount;
 import org.bp.media.model.ExceptionResponse;
+import org.bp.media.model.TV_Fault_Exception;
+import org.bp.media.model.Household;
 import org.bp.media.model.InternetBroadband;
+import org.bp.media.model.InternetOrder;
 import org.bp.media.model.OrderInfo;
 import org.bp.media.model.Utils;
 import org.bp.media.state.ProcessingEvent;
 import org.bp.media.state.ProcessingState;
 import org.bp.media.state.StateService;
+import org.bp.media.model.PaymentCard;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
+
+import io.swagger.util.Json;
 
 @Component
 public class MediaOrderingService extends RouteBuilder {
+	
+	@org.springframework.context.annotation.Bean
+	public RestTemplate restTemplate(RestTemplateBuilder builder) {
+		return builder.build();
+	}
+	
+	@org.springframework.beans.factory.annotation.Autowired
+	RestTemplate restTemplate;
+	
+	HashMap<String, OrderInfo> orders = new HashMap<>();
+	HashMap<Integer, String> tvOrdersMappings = new HashMap<>();
+	HashMap<Integer, String> internetOrdersMappings = new HashMap<>();
+	HashMap<Integer, String> paymentTransactionsMappings = new HashMap<>();
+	HashMap<String, OrderMediaRequest> orderRequests = new HashMap<>();
 
 	@org.springframework.beans.factory.annotation.Autowired
 	OrderIdentifierService orderIdentifierService;
@@ -41,6 +86,15 @@ public class MediaOrderingService extends RouteBuilder {
 
 	@org.springframework.beans.factory.annotation.Value("${media.service.type}")
 	private String mediaServiceType;
+
+	@org.springframework.beans.factory.annotation.Value("${media.tv.server}")
+	private String mediaTVServer;
+
+	@org.springframework.beans.factory.annotation.Value("${media.internet.server}")
+	private String mediaInternetServer;
+
+	@org.springframework.beans.factory.annotation.Value("${media.payment.server}")
+	private String mediaPaymentServer;
 
 	@Override
 	public void configure() throws Exception {
@@ -64,20 +118,27 @@ public class MediaOrderingService extends RouteBuilder {
 				// turn on swagger api-doc
 				.apiContextPath("/api-doc").apiProperty("api.title", "Micro Media Ordering API")
 				.apiProperty("api.version", "1.0.0");
-
+		
 		rest("/media").description("Micro Media Ordering REST service").consumes("application/json")
-				.produces("application/json").post("/ordering").description("Order media services")
-				.type(OrderMediaRequest.class).outType(OrderInfo.class).param().name("body").type(body)
-				.description("Media services to order").endParam().responseMessage().code(200)
-				.message("Media services successfully ordered").endResponseMessage().to("direct:orderMedia");
+		.produces("application/json").get("/order").description("Order media services")
+		.type(OrderMediaRequest.class).outType(OrderInfo.class).param().name("body").type(body)
+		.description("Media services to order").endParam().responseMessage().code(200)
+		.message("Media services successfully ordered").endResponseMessage().to("direct:orderMedia");
+		
+//		rest("/media").produces("application/json").get("/order/{id}").description("Get media order info")
+//		.outType(OrderInfo.class).param().name("body").type(body)
+//				.description("Media services to order").endParam().responseMessage().code(200)
+//				.message("Media services successfully ordered").endResponseMessage().to("direct:orderMedia");
 
 		from("direct:orderMedia").routeId("orderMedia").log("orderMedia fired").process((exchange) -> {
 			exchange.getMessage().setHeader("orderMediaId", orderIdentifierService.getOrderIdentifier());
 		}).to("direct:MediaOrderRequest").to("direct:orderRequester");
 
 		from("direct:orderRequester").routeId("orderRequester").log("orderRequester fired").process((exchange) -> {
-			exchange.getMessage().setBody(
-					Utils.prepareOrderInfo(exchange.getMessage().getHeader("orderMediaId", String.class), null));
+			OrderInfo orderInfo = Utils.prepareOrderInfo(exchange.getMessage().getHeader("orderMediaId", String.class),
+					null);
+			orders.put(orderInfo.getId(), orderInfo);
+			exchange.getMessage().setBody(orderInfo);
 		});
 
 		from("direct:MediaOrderRequest").routeId("MediaOrderRequest").log("brokerTopic fired").marshal().json()
@@ -92,24 +153,29 @@ public class MediaOrderingService extends RouteBuilder {
 					String mediaOrderId = exchange.getMessage().getHeader("orderMediaId", String.class);
 					ProcessingState previousState = tvStateService.sendEvent(mediaOrderId, ProcessingEvent.START);
 					if (previousState != ProcessingState.CANCELLED) {
-						OrderInfo oi = new OrderInfo();
-						oi.setId(orderIdentifierService.getOrderIdentifier());
 						OrderMediaRequest omr = exchange.getMessage().getBody(OrderMediaRequest.class);
-//TODO: cost handling
-//					if (omr != null && omr.getTvService() != null && omr.getHotel().getCountry() != null) {
-//						String country = omr.getHotel().getCountry();
-//						if (country.equals("USA")) {
-//							bi.setCost(new BigDecimal(999));
-//						} else {
-//							bi.setCost(new BigDecimal(888));
-//						}
-//					}
-						if (omr.getTvService().getType().equals(TVType.SATELLITE)) {
-							throw new TVOrderException("Not available TV service: " + omr.getTvService().getType());
-						} else {
-							oi.setCost(new BigDecimal(1200));
+						URL wsdlURL = new URL("http://" + mediaTVServer + "/soap-api/service/tv?wsdl");
+
+						QName SERVICE_NAME = new QName("http://tv.bp.org/", "OrderTvServiceService");
+						OrderTvServiceService ss = new OrderTvServiceService(wsdlURL, SERVICE_NAME);
+						OrderTvService port = ss.getOrderTvServicePort();
+
+						TVOrder tvOrder = new TVOrder();
+						tvOrder.setHousehold(omr.getHousehold());
+						tvOrder.setTVService(omr.getTvService());
+						tvOrder.setInstallmentDate(omr.getTvInstallmentDate());
+						OrderInfo orderInfo = orders.get(mediaOrderId);
+						try {
+							orderInfo = port.orderTV(tvOrder);
+							System.out.println("orderTV.result=" + orderInfo);
+
+						} catch (TV_Fault_Exception e) {
+							System.out.println("Expected exception: Fault has occurred.");
+							System.out.println(e.toString());
 						}
-						exchange.getMessage().setBody(oi);
+						tvOrdersMappings.put(Integer.valueOf(orderInfo.getId()), mediaOrderId);
+						orderInfo.setId(mediaOrderId);
+						exchange.getMessage().setBody(orderInfo);
 						previousState = tvStateService.sendEvent(mediaOrderId, ProcessingEvent.FINISH);
 					}
 					exchange.getMessage().setHeader("previousState", previousState);
@@ -140,26 +206,30 @@ public class MediaOrderingService extends RouteBuilder {
 					String mediaOrderId = exchange.getMessage().getHeader("orderMediaId", String.class);
 					ProcessingState previousState = internetStateService.sendEvent(mediaOrderId, ProcessingEvent.START);
 					if (previousState != ProcessingState.CANCELLED) {
-
-						OrderInfo oi = new OrderInfo();
-						oi.setId(orderIdentifierService.getOrderIdentifier());
 						OrderMediaRequest omr = exchange.getMessage().getBody(OrderMediaRequest.class);
-//					if (omr != null && omr.getFlight() != null && omr.getFlight().getFrom() != null
-//							&& omr.getFlight().getFrom().getAirport() != null) {
-//						String from = omr.getFlight().getFrom().getAirport();
-//						if (from.equals("JFK")) {
-//							oi.setCost(new BigDecimal(700));
-//						} else {
-//							oi.setCost(new BigDecimal(600));
-//						}
-//					}
-						if (omr.getInternetService().getBroadband().equals(InternetBroadband.FIBRE_OPTIC)) {
-							throw new InternetServiceException(
-									"Not available broadband: " + omr.getInternetService().getBroadband());
-						} else {
-							oi.setCost(new BigDecimal(900));
+						URL wsdlURL = new URL("http://" + mediaInternetServer + "/soap-api/service/internet?wsdl");
+
+						QName SERVICE_NAME = new QName("http://internet.bp.org/", "OrderInternetServiceService");
+						OrderInternetServiceService ss = new OrderInternetServiceService(wsdlURL, SERVICE_NAME);
+						OrderInternetService port = ss.getOrderInternetServicePort();
+
+						InternetOrder internetOrder = new InternetOrder();
+						internetOrder.setHousehold(omr.getHousehold());
+						internetOrder.setInternetService(omr.getInternetService());
+						internetOrder.setInstallmentDate(omr.getInternetInstallmentDate());
+						OrderInfo orderInfo = orders.get(mediaOrderId);
+						try {
+							orderInfo = port.orderInternet(internetOrder);
+							System.out.println("orderInternet.result=" + orderInfo);
+
+						} catch (Internet_Fault_Exception e) {
+							System.out.println("Expected exception: Fault has occurred.");
+							System.out.println(e.toString());
 						}
-						exchange.getMessage().setBody(oi);
+
+						internetOrdersMappings.put(Integer.valueOf(orderInfo.getId()), mediaOrderId);
+						orderInfo.setId(mediaOrderId);
+						exchange.getMessage().setBody(orderInfo);
 						previousState = internetStateService.sendEvent(mediaOrderId, ProcessingEvent.FINISH);
 					}
 					exchange.getMessage().setHeader("previousState", previousState);
@@ -201,18 +271,38 @@ public class MediaOrderingService extends RouteBuilder {
 					boolean isReady = paymentService.addOrderMediaRequest(mediaOrderId,
 							exchange.getMessage().getBody(OrderMediaRequest.class));
 					exchange.getMessage().setHeader("isReady", isReady);
+					OrderMediaRequest omr = exchange.getMessage().getBody(OrderMediaRequest.class);
+					orderRequests.putIfAbsent(mediaOrderId, omr);
 				}).choice().when(header("isReady").isEqualTo(true)).to("direct:finalizePayment").endChoice();
 
 		from("direct:finalizePayment").routeId("finalizePayment").log("fired finalizePayment").process((exchange) -> {
 			String mediaOrderId = exchange.getMessage().getHeader("orderMediaId", String.class);
+			OrderMediaRequest omr = orderRequests.get(mediaOrderId); 
 			PaymentService.PaymentData paymentData = paymentService.getPaymentData(mediaOrderId);
 			BigDecimal tvCost = paymentData.tvOrderInfo.getCost();
 			BigDecimal internetCost = paymentData.internetOrderInfo.getCost();
 			BigDecimal totalCost = tvCost.add(internetCost);
-			OrderInfo mediaOrderInfo = new OrderInfo();
-			mediaOrderInfo.setId(mediaOrderId);
-			mediaOrderInfo.setCost(totalCost);
-			exchange.getMessage().setBody(mediaOrderInfo);
+				
+			PaymentRequest paymentRequest = new PaymentRequest();
+			paymentRequest.setPaymentCard(omr.getPaymentCard());
+			Amount amount = new Amount();
+			paymentRequest.setAmount(amount);
+			amount.setValue(totalCost);
+			amount.setCurrency("PLN");
+			PaymentResponse paymentResponse = new PaymentResponse();
+			try {
+				ResponseEntity<PaymentResponse> re = restTemplate.postForEntity("http://" + mediaPaymentServer + "/payment", paymentRequest,
+						PaymentResponse.class);
+				paymentResponse = re.getBody();
+			} catch (HttpClientErrorException e) { // catch 4xx response codes
+				log.error(e.getResponseBodyAsString());
+			}
+			tvOrdersMappings.put(Integer.valueOf(paymentResponse.getTransactionId()), mediaOrderId);
+//			OrderInfo mediaOrderInfo = new OrderInfo();
+//			mediaOrderInfo.setId(mediaOrderId);
+//			mediaOrderInfo.setCost(totalCost);
+//			exchange.getMessage().setBody(mediaOrderInfo);
+//			exchange.getMessage().setBody(paymentResponse);
 		}).to("direct:notification");
 
 		from("direct:notification").routeId("notification").log("fired notification").to("stream:out");

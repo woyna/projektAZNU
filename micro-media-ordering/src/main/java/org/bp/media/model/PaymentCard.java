@@ -16,21 +16,18 @@ import java.util.Objects;
 import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonValue;
 /**
  * PaymentCard
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2021-01-25T21:35:40.848+01:00[Europe/Belgrade]")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PaymentCard {
-  @JsonProperty("name")
-  private String name = null;
-
-  @JsonProperty("validTo")
-  private String validTo = null;
-
-  @JsonProperty("number")
-  private String number = null;
+	
+  private String name;
+  private String validTo;
+  private String number;
 
   public PaymentCard name(String name) {
     this.name = name;

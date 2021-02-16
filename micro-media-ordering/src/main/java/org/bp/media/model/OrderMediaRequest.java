@@ -13,6 +13,9 @@
 package org.bp.media.model;
 
 import java.util.Objects;
+
+import javax.xml.datatype.XMLGregorianCalendar;
+
 import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -35,13 +38,13 @@ public class OrderMediaRequest {
   private TVService tvService = null;
 
   @JsonProperty("tvInstallmentDate")
-  private OffsetDateTime tvInstallmentDate = null;
+  private XMLGregorianCalendar tvInstallmentDate = null;
 
   @JsonProperty("internetService")
   private InternetService internetService = null;
 
   @JsonProperty("internetInstallmentDate")
-  private OffsetDateTime internetInstallmentDate = null;
+  private XMLGregorianCalendar internetInstallmentDate = null;
 
   @JsonProperty("paymentCard")
   private PaymentCard paymentCard = null;
@@ -80,7 +83,7 @@ public class OrderMediaRequest {
     this.tvService = tvService;
   }
 
-  public OrderMediaRequest tvInstallmentDate(OffsetDateTime tvInstallmentDate) {
+  public OrderMediaRequest tvInstallmentDate(XMLGregorianCalendar tvInstallmentDate) {
     this.tvInstallmentDate = tvInstallmentDate;
     return this;
   }
@@ -89,11 +92,11 @@ public class OrderMediaRequest {
    * Get tvInstallmentDate
    * @return tvInstallmentDate
   **/
-  public OffsetDateTime getTvInstallmentDate() {
+  public XMLGregorianCalendar getTvInstallmentDate() {
     return tvInstallmentDate;
   }
 
-  public void setTvInstallmentDate(OffsetDateTime tvInstallmentDate) {
+  public void setTvInstallmentDate(XMLGregorianCalendar tvInstallmentDate) {
     this.tvInstallmentDate = tvInstallmentDate;
   }
 
@@ -114,7 +117,7 @@ public class OrderMediaRequest {
     this.internetService = internetService;
   }
 
-  public OrderMediaRequest internetInstallmentDate(OffsetDateTime internetInstallmentDate) {
+  public OrderMediaRequest internetInstallmentDate(XMLGregorianCalendar internetInstallmentDate) {
     this.internetInstallmentDate = internetInstallmentDate;
     return this;
   }
@@ -123,11 +126,11 @@ public class OrderMediaRequest {
    * Get internetInstallmentDate
    * @return internetInstallmentDate
   **/
-  public OffsetDateTime getInternetInstallmentDate() {
+  public XMLGregorianCalendar getInternetInstallmentDate() {
     return internetInstallmentDate;
   }
 
-  public void setInternetInstallmentDate(OffsetDateTime internetInstallmentDate) {
+  public void setInternetInstallmentDate(XMLGregorianCalendar internetInstallmentDate) {
     this.internetInstallmentDate = internetInstallmentDate;
   }
 
