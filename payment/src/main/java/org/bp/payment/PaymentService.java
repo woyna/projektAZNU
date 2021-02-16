@@ -7,6 +7,8 @@ import java.util.Random;
 import org.bp.payment.model.PaymentException;
 import org.bp.payment.model.PaymentRequest;
 import org.bp.payment.model.PaymentResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,7 +32,7 @@ public class PaymentService {
 	@Operation(summary = "payment operation", description = "operation for payment", responses = {
 			@ApiResponse(responseCode = "200", description = "OK", content = {
 					@Content(mediaType = "application/json", schema = @Schema(implementation = PaymentResponse.class)) }),
-			@ApiResponse(responseCode = "400", description = "Bad Request", content = {
+			@ApiResponse(responseCode = "400", description = "Bad Request qwe", content = {
 					@Content(mediaType = "application/json", schema = @Schema(implementation = ExceptionResponse.class)) }) })
 	public PaymentResponse payment(@org.springframework.web.bind.annotation.RequestBody PaymentRequest paymentRequest) {
 		ExceptionHandler.validateRequest(paymentRequest);
@@ -38,6 +40,8 @@ public class PaymentService {
 		PaymentResponse paymentResponse = new PaymentResponse();
 		paymentResponse.setTransactionDate(new Date());
 		paymentResponse.setTransactionId(getPaymentId(payments));
+		paymentResponse.setAmount(paymentRequest.getAmount());
+		paymentResponse.setPaymentCard(paymentRequest.getPaymentCard());
 		payments.put(paymentResponse.getTransactionId(), paymentResponse);
 		
 		return paymentResponse;
