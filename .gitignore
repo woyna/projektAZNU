@@ -1,4 +1,3 @@
-/*
 /*/
 !/micro-media-ordering/
 !/order-internet-service/
@@ -6,3 +5,4 @@
 !/order-tv-service/
 !/payment/
 /**/generated/
+media-ordering.yml

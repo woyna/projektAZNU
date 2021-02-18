@@ -1,0 +1,62 @@
+version: '2'
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+  kafka:
+    image: wurstmeister/kafka 
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  gateway:
+    image: aznu/micro-media-ordering
+    ports:
+      - "8090:8090"
+    depends_on:
+      - kafka
+    environment:
+      MEDIA_KAFKA_SERVER: kafka:9092
+      MEDIA_SERVICE_TYPE: gateway
+  tv:
+    image: aznu/micro-media-ordering
+    depends_on:
+      - kafka
+    environment:
+      MEDIA_KAFKA_SERVER: kafka:9092
+      MEDIA_SERVICE_TYPE: tv
+      MEDIA_TV_SERVER: order-tv:8080
+  internet:
+    image: aznu/micro-media-ordering
+    depends_on:
+      - kafka
+    environment:
+      MEDIA_KAFKA_SERVER: kafka:9092
+      MEDIA_SERVICE_TYPE: internet
+      MEDIA_INTERNET_SERVER: order-internet:8081
+  payment:
+    image: aznu/micro-media-ordering
+    depends_on:
+      - kafka
+    environment:
+      MEDIA_KAFKA_SERVER: kafka:9092
+      MEDIA_SERVICE_TYPE: payment
+      MEDIA_PAYMENT_SERVER: payment-server:8082
+  order-tv:
+    image: aznu/order-tv-service
+    ports:
+      - "8080:8080"
+  order-internet:
+    image: aznu/order-internet-service
+    ports:
+      - "8081:8081"
+  payment-server:
+    image: aznu/payment
+    ports:
+      - "8082:8082"
