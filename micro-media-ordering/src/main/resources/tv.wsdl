@@ -3,8 +3,26 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://tv.bp.org/" attributeFormDefault="unqualified" elementFormDefault="unqualified" targetNamespace="http://tv.bp.org/">
   <xs:element name="cancelOrder" type="tns:cancelOrder"/>
   <xs:element name="cancelOrderResponse" type="tns:cancelOrderResponse"/>
+  <xs:element name="getOrderInfo" type="tns:getOrderInfo"/>
+  <xs:element name="getOrderInfoResponse" type="tns:getOrderInfoResponse"/>
   <xs:element name="orderTV" type="tns:orderTV"/>
   <xs:element name="orderTVResponse" type="tns:orderTVResponse"/>
+  <xs:complexType name="getOrderInfo">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="arg0" type="tns:orderInfo"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="orderInfo">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="cost" type="xs:decimal"/>
+      <xs:element name="id" type="xs:int"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="getOrderInfoResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:orderInfo"/>
+    </xs:sequence>
+  </xs:complexType>
   <xs:complexType name="cancelOrder">
     <xs:sequence>
       <xs:element name="arg0" type="xs:int"/>
@@ -13,12 +31,6 @@
   <xs:complexType name="cancelOrderResponse">
     <xs:sequence>
       <xs:element minOccurs="0" name="return" type="tns:orderInfo"/>
-    </xs:sequence>
-  </xs:complexType>
-  <xs:complexType name="orderInfo">
-    <xs:sequence>
-      <xs:element minOccurs="0" name="cost" type="xs:decimal"/>
-      <xs:element name="id" type="xs:int"/>
     </xs:sequence>
   </xs:complexType>
   <xs:complexType name="orderTV">
@@ -72,12 +84,20 @@
     <wsdl:part element="tns:orderTV" name="parameters">
     </wsdl:part>
   </wsdl:message>
+  <wsdl:message name="getOrderInfoResponse">
+    <wsdl:part element="tns:getOrderInfoResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
   <wsdl:message name="Fault">
     <wsdl:part element="tns:Fault" name="Fault">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="orderTVResponse">
     <wsdl:part element="tns:orderTVResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getOrderInfo">
+    <wsdl:part element="tns:getOrderInfo" name="parameters">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="cancelOrder">
@@ -89,6 +109,14 @@
     </wsdl:part>
   </wsdl:message>
   <wsdl:portType name="OrderTvService">
+    <wsdl:operation name="getOrderInfo">
+      <wsdl:input message="tns:getOrderInfo" name="getOrderInfo">
+    </wsdl:input>
+      <wsdl:output message="tns:getOrderInfoResponse" name="getOrderInfoResponse">
+    </wsdl:output>
+      <wsdl:fault message="tns:Fault" name="Fault">
+    </wsdl:fault>
+    </wsdl:operation>
     <wsdl:operation name="cancelOrder">
       <wsdl:input message="tns:cancelOrder" name="cancelOrder">
     </wsdl:input>
@@ -108,6 +136,18 @@
   </wsdl:portType>
   <wsdl:binding name="OrderTvServiceServiceSoapBinding" type="tns:OrderTvService">
     <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="getOrderInfo">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="getOrderInfo">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getOrderInfoResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="Fault">
+        <soap:fault name="Fault" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
     <wsdl:operation name="cancelOrder">
       <soap:operation soapAction="" style="document"/>
       <wsdl:input name="cancelOrder">

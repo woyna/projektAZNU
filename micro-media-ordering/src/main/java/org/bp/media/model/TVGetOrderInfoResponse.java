@@ -8,12 +8,12 @@ import javax.xml.bind.annotation.XmlType;
 
 
 /**
- * <p>Java class for cancelOrderResponse complex type.
+ * <p>Java class for getOrderInfoResponse complex type.
  * 
  * <p>The following schema fragment specifies the expected content contained within this class.
  * 
  * <pre>
- * &lt;complexType name="cancelOrderResponse"&gt;
+ * &lt;complexType name="getOrderInfoResponse"&gt;
  *   &lt;complexContent&gt;
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
  *       &lt;sequence&gt;
@@ -27,12 +27,12 @@ import javax.xml.bind.annotation.XmlType;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "cancelOrderResponse", propOrder = {
+@XmlType(name = "getOrderInfoResponse", propOrder = {
     "_return"
 })
-public class TVCancelOrderResponse {
+public class TVGetOrderInfoResponse {
 
-	@XmlElement(name = "return")
+    @XmlElement(name = "return")
     protected OrderInfo _return;
 
     /**

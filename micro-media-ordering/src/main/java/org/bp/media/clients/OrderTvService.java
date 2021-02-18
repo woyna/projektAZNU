@@ -23,6 +23,16 @@ import org.bp.media.model.TVOrder;
 @XmlSeeAlso({TVObjectFactory.class})
 public interface OrderTvService {
 
+	 @WebMethod
+	    @RequestWrapper(localName = "getOrderInfo", targetNamespace = "http://tv.bp.org/", className = "org.bp.media.model.TVGetOrderInfo")
+	    @ResponseWrapper(localName = "getOrderInfoResponse", targetNamespace = "http://tv.bp.org/", className = "org.bp.media.model.TVGetOrderInfoResponse")
+	    @WebResult(name = "return", targetNamespace = "")
+	    public OrderInfo getOrderInfo(
+
+	        @WebParam(name = "arg0", targetNamespace = "")
+	        OrderInfo arg0
+	    ) throws TV_Fault_Exception;
+	
     @WebMethod
     @RequestWrapper(localName = "cancelOrder", targetNamespace = "http://tv.bp.org/", className = "org.bp.media.model.TVCancelOrder")
     @ResponseWrapper(localName = "cancelOrderResponse", targetNamespace = "http://tv.bp.org/", className = "org.bp.media.model.TVCancelOrderResponse")

@@ -24,8 +24,10 @@ import javax.xml.namespace.QName;
 @XmlRegistry
 public class InternetObjectFactory {
 
-    private final static QName _CancelOrder_QNAME = new QName("http://internet.bp.org/", "cancelOrder");
-    private final static QName _CancelOrderResponse_QNAME = new QName("http://internet.bp.org/", "cancelOrderResponse");
+    private final static QName _InternetCancelOrder_QNAME = new QName("http://internet.bp.org/", "InternetCancelOrder");
+    private final static QName _InternetCancelOrderResponse_QNAME = new QName("http://internet.bp.org/", "InternetCancelOrderResponse");
+    private final static QName _InternetGetOrderInfo_QNAME = new QName("http://internet.bp.org/", "InternetGetOrderInfo");
+    private final static QName _InternetGetOrderInfoResponse_QNAME = new QName("http://internet.bp.org/", "InternetGetOrderInfoResponse");
     private final static QName _OrderInternet_QNAME = new QName("http://internet.bp.org/", "orderInternet");
     private final static QName _OrderInternetResponse_QNAME = new QName("http://internet.bp.org/", "orderInternetResponse");
     private final static QName _Fault_QNAME = new QName("http://internet.bp.org/", "Fault");
@@ -41,7 +43,7 @@ public class InternetObjectFactory {
      * Create an instance of {@link InternetCancelOrder }
      * 
      */
-    public InternetCancelOrder createCancelOrder() {
+    public InternetCancelOrder createInternetCancelOrder() {
         return new InternetCancelOrder();
     }
 
@@ -49,8 +51,24 @@ public class InternetObjectFactory {
      * Create an instance of {@link InternetCancelOrderResponse }
      * 
      */
-    public InternetCancelOrderResponse createCancelOrderResponse() {
+    public InternetCancelOrderResponse createInternetCancelOrderResponse() {
         return new InternetCancelOrderResponse();
+    }
+
+    /**
+     * Create an instance of {@link InternetGetOrderInfo }
+     * 
+     */
+    public InternetGetOrderInfo createInternetGetOrderInfo() {
+        return new InternetGetOrderInfo();
+    }
+
+    /**
+     * Create an instance of {@link InternetGetOrderInfoResponse }
+     * 
+     */
+    public InternetGetOrderInfoResponse createInternetGetOrderInfoResponse() {
+        return new InternetGetOrderInfoResponse();
     }
 
     /**
@@ -117,9 +135,9 @@ public class InternetObjectFactory {
      * @return
      *     the new instance of {@link JAXBElement }{@code <}{@link InternetCancelOrder }{@code >}
      */
-    @XmlElementDecl(namespace = "http://internet.bp.org/", name = "cancelOrder")
-    public JAXBElement<InternetCancelOrder> createCancelOrder(InternetCancelOrder value) {
-        return new JAXBElement<InternetCancelOrder>(_CancelOrder_QNAME, InternetCancelOrder.class, null, value);
+    @XmlElementDecl(namespace = "http://internet.bp.org/", name = "InternetCancelOrder")
+    public JAXBElement<InternetCancelOrder> createInternetCancelOrder(InternetCancelOrder value) {
+        return new JAXBElement<InternetCancelOrder>(_InternetCancelOrder_QNAME, InternetCancelOrder.class, null, value);
     }
 
     /**
@@ -130,9 +148,35 @@ public class InternetObjectFactory {
      * @return
      *     the new instance of {@link JAXBElement }{@code <}{@link InternetCancelOrderResponse }{@code >}
      */
-    @XmlElementDecl(namespace = "http://internet.bp.org/", name = "cancelOrderResponse")
-    public JAXBElement<InternetCancelOrderResponse> createCancelOrderResponse(InternetCancelOrderResponse value) {
-        return new JAXBElement<InternetCancelOrderResponse>(_CancelOrderResponse_QNAME, InternetCancelOrderResponse.class, null, value);
+    @XmlElementDecl(namespace = "http://internet.bp.org/", name = "InternetCancelOrderResponse")
+    public JAXBElement<InternetCancelOrderResponse> createInternetCancelOrderResponse(InternetCancelOrderResponse value) {
+        return new JAXBElement<InternetCancelOrderResponse>(_InternetCancelOrderResponse_QNAME, InternetCancelOrderResponse.class, null, value);
+    }
+
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link InternetGetOrderInfo }{@code >}
+     * 
+     * @param value
+     *     Java instance representing xml element's value.
+     * @return
+     *     the new instance of {@link JAXBElement }{@code <}{@link InternetGetOrderInfo }{@code >}
+     */
+    @XmlElementDecl(namespace = "http://internet.bp.org/", name = "InternetGetOrderInfo")
+    public JAXBElement<InternetGetOrderInfo> createInternetGetOrderInfo(InternetGetOrderInfo value) {
+        return new JAXBElement<InternetGetOrderInfo>(_InternetGetOrderInfo_QNAME, InternetGetOrderInfo.class, null, value);
+    }
+
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link InternetGetOrderInfoResponse }{@code >}
+     * 
+     * @param value
+     *     Java instance representing xml element's value.
+     * @return
+     *     the new instance of {@link JAXBElement }{@code <}{@link InternetGetOrderInfoResponse }{@code >}
+     */
+    @XmlElementDecl(namespace = "http://internet.bp.org/", name = "InternetGetOrderInfoResponse")
+    public JAXBElement<InternetGetOrderInfoResponse> createInternetGetOrderInfoResponse(InternetGetOrderInfoResponse value) {
+        return new JAXBElement<InternetGetOrderInfoResponse>(_InternetGetOrderInfoResponse_QNAME, InternetGetOrderInfoResponse.class, null, value);
     }
 
     /**

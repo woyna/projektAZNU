@@ -5,7 +5,6 @@ import javax.xml.bind.annotation.XmlElementDecl;
 import javax.xml.bind.annotation.XmlRegistry;
 import javax.xml.namespace.QName;
 
-
 /**
  * This object contains factory methods for each 
  * Java content interface and Java element interface 
@@ -23,8 +22,10 @@ import javax.xml.namespace.QName;
 @XmlRegistry
 public class TVObjectFactory {
 
-    private final static QName _CancelOrder_QNAME = new QName("http://tv.bp.org/", "cancelOrder");
-    private final static QName _CancelOrderResponse_QNAME = new QName("http://tv.bp.org/", "cancelOrderResponse");
+    private final static QName _TVCancelOrder_QNAME = new QName("http://tv.bp.org/", "TVCancelOrder");
+    private final static QName _TVCancelOrderResponse_QNAME = new QName("http://tv.bp.org/", "TVCancelOrderResponse");
+    private final static QName _TVGetOrderInfo_QNAME = new QName("http://tv.bp.org/", "TVGetOrderInfo");
+    private final static QName _TVGetOrderInfoResponse_QNAME = new QName("http://tv.bp.org/", "TVGetOrderInfoResponse");
     private final static QName _OrderTV_QNAME = new QName("http://tv.bp.org/", "orderTV");
     private final static QName _OrderTVResponse_QNAME = new QName("http://tv.bp.org/", "orderTVResponse");
     private final static QName _Fault_QNAME = new QName("http://tv.bp.org/", "Fault");
@@ -40,7 +41,7 @@ public class TVObjectFactory {
      * Create an instance of {@link TVCancelOrder }
      * 
      */
-    public TVCancelOrder createCancelOrder() {
+    public TVCancelOrder createTVCancelOrder() {
         return new TVCancelOrder();
     }
 
@@ -48,8 +49,24 @@ public class TVObjectFactory {
      * Create an instance of {@link TVCancelOrderResponse }
      * 
      */
-    public TVCancelOrderResponse createCancelOrderResponse() {
+    public TVCancelOrderResponse createTVCancelOrderResponse() {
         return new TVCancelOrderResponse();
+    }
+
+    /**
+     * Create an instance of {@link TVGetOrderInfo }
+     * 
+     */
+    public TVGetOrderInfo createTVGetOrderInfo() {
+        return new TVGetOrderInfo();
+    }
+
+    /**
+     * Create an instance of {@link TVGetOrderInfoResponse }
+     * 
+     */
+    public TVGetOrderInfoResponse createTVGetOrderInfoResponse() {
+        return new TVGetOrderInfoResponse();
     }
 
     /**
@@ -85,7 +102,7 @@ public class TVObjectFactory {
     }
 
     /**
-     * Create an instance of {@link TVOrder }
+     * Create an instance of {@link TvOrder }
      * 
      */
     public TVOrder createTvOrder() {
@@ -116,9 +133,9 @@ public class TVObjectFactory {
      * @return
      *     the new instance of {@link JAXBElement }{@code <}{@link TVCancelOrder }{@code >}
      */
-    @XmlElementDecl(namespace = "http://tv.bp.org/", name = "cancelOrder")
-    public JAXBElement<TVCancelOrder> createCancelOrder(TVCancelOrder value) {
-        return new JAXBElement<TVCancelOrder>(_CancelOrder_QNAME, TVCancelOrder.class, null, value);
+    @XmlElementDecl(namespace = "http://tv.bp.org/", name = "TVCancelOrder")
+    public JAXBElement<TVCancelOrder> createTVCancelOrder(TVCancelOrder value) {
+        return new JAXBElement<TVCancelOrder>(_TVCancelOrder_QNAME, TVCancelOrder.class, null, value);
     }
 
     /**
@@ -129,9 +146,35 @@ public class TVObjectFactory {
      * @return
      *     the new instance of {@link JAXBElement }{@code <}{@link TVCancelOrderResponse }{@code >}
      */
-    @XmlElementDecl(namespace = "http://tv.bp.org/", name = "cancelOrderResponse")
-    public JAXBElement<TVCancelOrderResponse> createCancelOrderResponse(TVCancelOrderResponse value) {
-        return new JAXBElement<TVCancelOrderResponse>(_CancelOrderResponse_QNAME, TVCancelOrderResponse.class, null, value);
+    @XmlElementDecl(namespace = "http://tv.bp.org/", name = "TVCancelOrderResponse")
+    public JAXBElement<TVCancelOrderResponse> createTVCancelOrderResponse(TVCancelOrderResponse value) {
+        return new JAXBElement<TVCancelOrderResponse>(_TVCancelOrderResponse_QNAME, TVCancelOrderResponse.class, null, value);
+    }
+
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link TVGetOrderInfo }{@code >}
+     * 
+     * @param value
+     *     Java instance representing xml element's value.
+     * @return
+     *     the new instance of {@link JAXBElement }{@code <}{@link TVGetOrderInfo }{@code >}
+     */
+    @XmlElementDecl(namespace = "http://tv.bp.org/", name = "TVGetOrderInfo")
+    public JAXBElement<TVGetOrderInfo> createTVGetOrderInfo(TVGetOrderInfo value) {
+        return new JAXBElement<TVGetOrderInfo>(_TVGetOrderInfo_QNAME, TVGetOrderInfo.class, null, value);
+    }
+
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link TVGetOrderInfoResponse }{@code >}
+     * 
+     * @param value
+     *     Java instance representing xml element's value.
+     * @return
+     *     the new instance of {@link JAXBElement }{@code <}{@link TVGetOrderInfoResponse }{@code >}
+     */
+    @XmlElementDecl(namespace = "http://tv.bp.org/", name = "TVGetOrderInfoResponse")
+    public JAXBElement<TVGetOrderInfoResponse> createTVGetOrderInfoResponse(TVGetOrderInfoResponse value) {
+        return new JAXBElement<TVGetOrderInfoResponse>(_TVGetOrderInfoResponse_QNAME, TVGetOrderInfoResponse.class, null, value);
     }
 
     /**

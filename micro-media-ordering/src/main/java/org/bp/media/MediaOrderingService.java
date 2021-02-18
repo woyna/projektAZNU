@@ -16,6 +16,7 @@ import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.language.bean.Bean;
 import org.apache.camel.model.dataformat.JsonLibrary;
 import org.apache.camel.model.rest.RestBindingMode;
+import org.apache.camel.model.rest.RestParamType;
 import org.apache.camel.util.json.JsonObject;
 import org.bp.media.model.OrderMediaRequest;
 import org.bp.media.model.PaymentRequest;
@@ -54,23 +55,26 @@ import io.swagger.util.Json;
 
 @Component
 public class MediaOrderingService extends RouteBuilder {
-	
+
 	@org.springframework.context.annotation.Bean
 	public RestTemplate restTemplate(RestTemplateBuilder builder) {
 		return builder.build();
 	}
-	
+
 	@org.springframework.beans.factory.annotation.Autowired
 	RestTemplate restTemplate;
-	
+
 	HashMap<String, OrderInfo> orders = new HashMap<>();
-	HashMap<Integer, String> tvOrdersMappings = new HashMap<>();
-	HashMap<Integer, String> internetOrdersMappings = new HashMap<>();
-	HashMap<Integer, String> paymentTransactionsMappings = new HashMap<>();
+	HashMap<String, Integer> tvOrdersMappings = new HashMap<>();
+	HashMap<String, Integer> internetOrdersMappings = new HashMap<>();
+	HashMap<String, Integer> paymentTransactionsMappings = new HashMap<>();
 	HashMap<String, OrderMediaRequest> orderRequests = new HashMap<>();
 
 	@org.springframework.beans.factory.annotation.Autowired
 	OrderIdentifierService orderIdentifierService;
+	
+	@org.springframework.beans.factory.annotation.Autowired
+	OrderGetterService orderGetterService;
 
 	@org.springframework.beans.factory.annotation.Autowired
 	PaymentService paymentService;
@@ -118,32 +122,71 @@ public class MediaOrderingService extends RouteBuilder {
 				// turn on swagger api-doc
 				.apiContextPath("/api-doc").apiProperty("api.title", "Micro Media Ordering API")
 				.apiProperty("api.version", "1.0.0");
-		
-		rest("/media").description("Micro Media Ordering REST service").consumes("application/json")
-		.produces("application/json").get("/order").description("Order media services")
-		.type(OrderMediaRequest.class).outType(OrderInfo.class).param().name("body").type(body)
-		.description("Media services to order").endParam().responseMessage().code(200)
-		.message("Media services successfully ordered").endResponseMessage().to("direct:orderMedia");
-		
-//		rest("/media").produces("application/json").get("/order/{id}").description("Get media order info")
-//		.outType(OrderInfo.class).param().name("body").type(body)
+
+//		rest("/media").description("Micro Media Ordering REST service").consumes("application/json")
+//				.produces("application/json").post("/order").description("Order media services")
+//				.type(OrderMediaRequest.class).outType(OrderInfo.class).param().name("body").type(body)
 //				.description("Media services to order").endParam().responseMessage().code(200)
 //				.message("Media services successfully ordered").endResponseMessage().to("direct:orderMedia");
+		
+		rest("/media").description("Micro Media Ordering REST service").consumes("application/json")
+		.produces("application/json").post("/order").description("Order media services")
+		.type(OrderMediaRequest.class).outType(PaymentResponse.class).param().name("body").type(body)
+		.description("Media services to order").endParam().responseMessage().code(200)
+		.message("Media services successfully ordered").endResponseMessage().to("direct:orderMedia");
+
+		rest("/media").produces("application/json").get("/order/{orderId}").description("Get media order info")
+				.outType(OrderInfo.class).param().name("orderId").type(RestParamType.path)
+				.description("Media order ID to get").endParam().responseMessage().code(200)
+				.message("Media services successfully get").endResponseMessage().to("direct:getOrders");
 
 		from("direct:orderMedia").routeId("orderMedia").log("orderMedia fired").process((exchange) -> {
 			exchange.getMessage().setHeader("orderMediaId", orderIdentifierService.getOrderIdentifier());
 		}).to("direct:MediaOrderRequest").to("direct:orderRequester");
 
-		from("direct:orderRequester").routeId("orderRequester").log("orderRequester fired").process((exchange) -> {
+		from("direct:getOrders").routeId("getOrders").log("getOrders fired").to("direct:MediaGetRequest")
+				.to("direct:orderGetter");
+
+		from("direct:orderRequester").routeId("orderRequester").log("orderRequester fired").unmarshal()
+		.json(JsonLibrary.Jackson, PaymentResponse.class).process((exchange) -> {
 			OrderInfo orderInfo = Utils.prepareOrderInfo(exchange.getMessage().getHeader("orderMediaId", String.class),
 					null);
 			orders.put(orderInfo.getId(), orderInfo);
 			exchange.getMessage().setBody(orderInfo);
 		});
 
+		from("direct:orderGetter").routeId("orderGetter").log("orderGetter fired");
+
 		from("direct:MediaOrderRequest").routeId("MediaOrderRequest").log("brokerTopic fired").marshal().json()
 				.to("kafka:MediaReqTopic?brokers=" + mediaKafkaServer + "&groupId=" + mediaServiceType);
 
+		from("direct:MediaGetRequest").routeId("MediaGetRequest").log("brokerTopic fired").marshal().json()
+				.to("kafka:MediaGetTopic?brokers=" + mediaKafkaServer + "&groupId=" + mediaServiceType);
+
+		from("kafka:GetOrdersTopic?brokers=" + mediaKafkaServer + "&groupId=" + mediaServiceType)
+				.routeId("gatherOrders").log("fired gatherOrders").unmarshal()
+				.json(JsonLibrary.Jackson, OrderInfo.class).process((exchange) -> {
+					String mediaOrderId = exchange.getMessage().getHeader("orderId", String.class);
+					boolean isReady = orderGetterService.addOrderInfo(mediaOrderId,
+							exchange.getMessage().getBody(OrderInfo.class),
+							exchange.getMessage().getHeader("serviceType", String.class));
+					exchange.getMessage().setHeader("isReady", isReady);
+				}).choice().when(header("isReady").isEqualTo(true)).to("direct:returnOrder").endChoice();
+		
+		from("kafka:GetPaymentTopic?brokers=" + mediaKafkaServer + "&groupId=" + mediaServiceType)
+		.routeId("gatherOrdersPayment").log("fired gatherOrdersPayment").unmarshal()
+		.json(JsonLibrary.Jackson, PaymentResponse.class).process((exchange) -> {
+			String mediaOrderId = exchange.getMessage().getHeader("orderId", String.class);
+			boolean isReady = orderGetterService.addPaymentInfo(mediaOrderId,
+					exchange.getMessage().getBody(PaymentResponse.class));
+			exchange.getMessage().setHeader("isReady", isReady);
+		}).choice().when(header("isReady").isEqualTo(true)).to("direct:returnOrder").endChoice();
+		
+		from("direct:returnOrder").routeId("returnOrder").process((exchange) -> {
+			String mediaOrderId = exchange.getMessage().getHeader("orderId", String.class);
+			OrderGetterService.OrderSummary orderSummary = orderGetterService.getOrderSummary(mediaOrderId);
+			exchange.getMessage().setBody(orderSummary);
+		}).log("Order returned").to("stream:out");
 	}
 
 	private void tv() {
@@ -173,7 +216,7 @@ public class MediaOrderingService extends RouteBuilder {
 							System.out.println("Expected exception: Fault has occurred.");
 							System.out.println(e.toString());
 						}
-						tvOrdersMappings.put(Integer.valueOf(orderInfo.getId()), mediaOrderId);
+						tvOrdersMappings.put(mediaOrderId, Integer.valueOf(orderInfo.getId()));
 						orderInfo.setId(mediaOrderId);
 						exchange.getMessage().setBody(orderInfo);
 						previousState = tvStateService.sendEvent(mediaOrderId, ProcessingEvent.FINISH);
@@ -197,6 +240,28 @@ public class MediaOrderingService extends RouteBuilder {
 		from("direct:orderTVCompensationAction").routeId("orderTVCompensationAction").log("fired orderTVCompensation")
 				.to("stream:out");
 
+		from("kafka:MediaGetTopic?brokers=" + mediaKafkaServer + "&groupId=" + mediaServiceType).routeId("getOrderTV")
+				.log("fired getOrderTV").process((exchange) -> {
+					String mediaOrderId = exchange.getMessage().getHeader("orderId", String.class);
+					URL wsdlURL = new URL("http://" + mediaTVServer + "/soap-api/service/tv?wsdl");
+
+					QName SERVICE_NAME = new QName("http://tv.bp.org/", "OrderTvServiceService");
+					OrderTvServiceService ss = new OrderTvServiceService(wsdlURL, SERVICE_NAME);
+					OrderTvService port = ss.getOrderTvServicePort();
+
+					OrderInfo orderInfo = new OrderInfo();
+					orderInfo.setId(String.valueOf(tvOrdersMappings.get(mediaOrderId)));
+					try {
+						orderInfo = port.getOrderInfo(orderInfo);
+						System.out.println("getTVOrder.result=" + orderInfo);
+
+					} catch (TV_Fault_Exception e) {
+						System.out.println("Expected exception: Fault has occurred.");
+						System.out.println(e.toString());
+					}
+					exchange.getMessage().setBody(orderInfo);
+				}).marshal().json().to("stream:out").setHeader("serviceType", constant("tv"))
+				.to("kafka:GetOrdersTopic?brokers=" + mediaKafkaServer + "&groupId=" + mediaServiceType);
 	}
 
 	private void internet() {
@@ -227,7 +292,7 @@ public class MediaOrderingService extends RouteBuilder {
 							System.out.println(e.toString());
 						}
 
-						internetOrdersMappings.put(Integer.valueOf(orderInfo.getId()), mediaOrderId);
+						internetOrdersMappings.put(mediaOrderId, Integer.valueOf(orderInfo.getId()));
 						orderInfo.setId(mediaOrderId);
 						exchange.getMessage().setBody(orderInfo);
 						previousState = internetStateService.sendEvent(mediaOrderId, ProcessingEvent.FINISH);
@@ -251,6 +316,29 @@ public class MediaOrderingService extends RouteBuilder {
 
 		from("direct:orderInternetCompensationAction").routeId("orderInternetCompensationAction")
 				.log("fired orderInternetCompensationAction").to("stream:out");
+		
+		from("kafka:MediaGetTopic?brokers=" + mediaKafkaServer + "&groupId=" + mediaServiceType).routeId("getOrderInternet")
+		.log("fired getOrderInternet").process((exchange) -> {
+			String mediaOrderId = exchange.getMessage().getHeader("orderId", String.class);
+			URL wsdlURL = new URL("http://" + mediaInternetServer + "/soap-api/service/internet?wsdl");
+
+			QName SERVICE_NAME = new QName("http://internet.bp.org/", "OrderInternetServiceService");
+			OrderInternetServiceService ss = new OrderInternetServiceService(wsdlURL, SERVICE_NAME);
+			OrderInternetService port = ss.getOrderInternetServicePort();
+
+			OrderInfo orderInfo = new OrderInfo();
+			orderInfo.setId(String.valueOf(internetOrdersMappings.get(mediaOrderId)));
+			try {
+				orderInfo = port.getOrderInfo(orderInfo);
+				System.out.println("getInternetOrder.result=" + orderInfo);
+
+			} catch (Internet_Fault_Exception e) {
+				System.out.println("Expected exception: Fault has occurred.");
+				System.out.println(e.toString());
+			}
+			exchange.getMessage().setBody(orderInfo);
+		}).marshal().json().to("stream:out").setHeader("serviceType", constant("internet"))
+		.to("kafka:GetOrdersTopic?brokers=" + mediaKafkaServer + "&groupId=" + mediaServiceType);
 	}
 
 	private void payment() {
@@ -277,12 +365,12 @@ public class MediaOrderingService extends RouteBuilder {
 
 		from("direct:finalizePayment").routeId("finalizePayment").log("fired finalizePayment").process((exchange) -> {
 			String mediaOrderId = exchange.getMessage().getHeader("orderMediaId", String.class);
-			OrderMediaRequest omr = orderRequests.get(mediaOrderId); 
+			OrderMediaRequest omr = orderRequests.get(mediaOrderId);
 			PaymentService.PaymentData paymentData = paymentService.getPaymentData(mediaOrderId);
 			BigDecimal tvCost = paymentData.tvOrderInfo.getCost();
 			BigDecimal internetCost = paymentData.internetOrderInfo.getCost();
 			BigDecimal totalCost = tvCost.add(internetCost);
-				
+
 			PaymentRequest paymentRequest = new PaymentRequest();
 			paymentRequest.setPaymentCard(omr.getPaymentCard());
 			Amount amount = new Amount();
@@ -291,21 +379,35 @@ public class MediaOrderingService extends RouteBuilder {
 			amount.setCurrency("PLN");
 			PaymentResponse paymentResponse = new PaymentResponse();
 			try {
-				ResponseEntity<PaymentResponse> re = restTemplate.postForEntity("http://" + mediaPaymentServer + "/payment", paymentRequest,
-						PaymentResponse.class);
+				ResponseEntity<PaymentResponse> re = restTemplate.postForEntity(
+						"http://" + mediaPaymentServer + "/payment", paymentRequest, PaymentResponse.class);
 				paymentResponse = re.getBody();
 			} catch (HttpClientErrorException e) { // catch 4xx response codes
 				log.error(e.getResponseBodyAsString());
 			}
-			tvOrdersMappings.put(Integer.valueOf(paymentResponse.getTransactionId()), mediaOrderId);
-//			OrderInfo mediaOrderInfo = new OrderInfo();
-//			mediaOrderInfo.setId(mediaOrderId);
-//			mediaOrderInfo.setCost(totalCost);
-//			exchange.getMessage().setBody(mediaOrderInfo);
-//			exchange.getMessage().setBody(paymentResponse);
+			paymentTransactionsMappings.put(mediaOrderId, Integer.valueOf(paymentResponse.getTransactionId()));
+			exchange.getMessage().setBody(paymentResponse);
 		}).to("direct:notification");
 
 		from("direct:notification").routeId("notification").log("fired notification").to("stream:out");
+		
+		from("kafka:MediaGetTopic?brokers=" + mediaKafkaServer + "&groupId=" + mediaServiceType).routeId("getPayment")
+		.log("fired getPayment").process((exchange) -> {
+			String mediaOrderId = exchange.getMessage().getHeader("orderId", String.class);
+			String transactionId = String.valueOf(paymentTransactionsMappings.get(mediaOrderId));
+			
+			PaymentResponse paymentResponse = new PaymentResponse();
+			try {
+				ResponseEntity<PaymentResponse> re = restTemplate.getForEntity(
+						"http://" + mediaPaymentServer + "/payment/" + transactionId, PaymentResponse.class);
+				paymentResponse = re.getBody();
+			} catch (HttpClientErrorException e) { // catch 4xx response codes
+				log.error(e.getResponseBodyAsString());
+			}
+			
+			exchange.getMessage().setBody(paymentResponse);
+		}).marshal().json().to("stream:out").setHeader("serviceType", constant("payment"))
+		.to("kafka:GetPaymentTopic?brokers=" + mediaKafkaServer + "&groupId=" + mediaServiceType);
 	}
 
 	private void orderTVExceptionHandlers() {

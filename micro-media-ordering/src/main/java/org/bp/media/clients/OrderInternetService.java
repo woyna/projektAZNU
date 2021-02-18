@@ -32,6 +32,16 @@ public interface OrderInternetService {
         @WebParam(name = "arg0", targetNamespace = "")
         InternetOrder arg0
     ) throws Internet_Fault_Exception;
+    
+    @WebMethod
+    @RequestWrapper(localName = "getOrderInfo", targetNamespace = "http://internet.bp.org/", className = "org.bp.media.model.InternetGetOrderInfo")
+    @ResponseWrapper(localName = "getOrderInfoResponse", targetNamespace = "http://internet.bp.org/", className = "org.bp.media.model.InternetGetOrderInfoResponse")
+    @WebResult(name = "return", targetNamespace = "")
+    public OrderInfo getOrderInfo(
+
+        @WebParam(name = "arg0", targetNamespace = "")
+        OrderInfo arg0
+    ) throws Internet_Fault_Exception;
 
     @WebMethod
     @RequestWrapper(localName = "cancelOrder", targetNamespace = "http://internet.bp.org/", className = "org.bp.media.model.InternetCancelOrder")

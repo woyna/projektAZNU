@@ -27,7 +27,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "cancelOrder", propOrder = {
     "arg0"
-}, namespace = "http://tv.bp.org/")
+})
 public class TVCancelOrder {
 
     protected int arg0;

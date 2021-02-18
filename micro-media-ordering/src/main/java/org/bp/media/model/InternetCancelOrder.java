@@ -28,7 +28,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "cancelOrder", propOrder = {
     "arg0"
-}, namespace = "http://internet.bp.org/")
+})
 public class InternetCancelOrder {
 
     protected int arg0;
