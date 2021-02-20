@@ -129,7 +129,9 @@ public class MediaOrderingService extends RouteBuilder {
 		from("direct:getOrders").routeId("getOrders").log("getOrders fired").to("direct:MediaGetRequest");
 
 		from("direct:MediaOrderRequest").routeId("MediaOrderRequest").log("brokerTopic fired").marshal().json()
-				.multicast().parallelProcessing().to("direct:orderTV", "direct:orderInternet", "direct:registerPayment");
+				.multicast()
+				.stopOnException()
+				.to("direct:orderTV", "direct:orderInternet", "direct:registerPayment");
 
 		from("direct:MediaGetRequest").routeId("MediaGetRequest").log("brokerTopic fired").marshal().json().multicast()
 				.parallelProcessing().to("direct:getTVOrder", "direct:getInternetOrder", "direct:getPaymentInfo");
@@ -361,11 +363,8 @@ public class MediaOrderingService extends RouteBuilder {
 			paymentTransactionsMappings.put(mediaOrderId, Integer.valueOf(paymentResponse.getTransactionId()));
 			orderGetterService.addPaymentInfo(mediaOrderId, paymentResponse);
 			exchange.getMessage().setBody(paymentResponse);
-		}).marshal().json().to("direct:returnOrderSummary");
-
-//		from("direct:notification").routeId("notification").log("fired notification").to("stream:out").unmarshal()
-//				.json(JsonLibrary.Jackson, OrderSummary.class);
-
+		}).marshal().json().to("stream:out").to("direct:returnOrderSummary");
+		
 		from("direct:getPaymentInfo").routeId("getPayment").log("fired getPayment").process((exchange) -> {
 			String mediaOrderId = exchange.getMessage().getHeader("orderId", String.class);
 			String transactionId = String.valueOf(paymentTransactionsMappings.get(mediaOrderId));
