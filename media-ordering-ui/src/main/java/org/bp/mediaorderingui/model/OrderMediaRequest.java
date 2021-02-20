@@ -10,7 +10,7 @@
  * Do not edit the class manually.
  */
 
-package org.bp.media.model;
+package org.bp.mediaorderingui.model;
 
 import java.util.Objects;
 
@@ -23,10 +23,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.time.OffsetDateTime;
-import org.bp.media.model.Household;
-import org.bp.media.model.InternetService;
-import org.bp.media.model.PaymentCard;
-import org.bp.media.model.TVService;
+
+import org.bp.mediaorderingui.model.Household;
+import org.bp.mediaorderingui.model.InternetService;
+import org.bp.mediaorderingui.model.PaymentCard;
+import org.bp.mediaorderingui.model.TVService;
 
 /**
  * OrderMediaRequest

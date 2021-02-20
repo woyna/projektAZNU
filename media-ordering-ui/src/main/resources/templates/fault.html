@@ -1,0 +1,13 @@
+<!DOCTYPE HTML>
+<html xmlns:th="https://www.thymeleaf.org">
+<head> 
+    <title>Fault of TV ordering</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+	<h1>Fault</h1>
+	<p th:text="'Code: ' + ${fault.code}" />
+    <p th:text="'Message: ' + ${fault.text}" />
+    <a href="/orderTV">Submit another order</a>
+</body>
+</html>

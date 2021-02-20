@@ -1,0 +1,29 @@
+<!DOCTYPE HTML>
+<html xmlns:th="https://www.thymeleaf.org">
+<head> 
+    <title>Result of media ordering</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+	<h1>Order Summary</h1>
+	<p th:text="'Use this ID to retrieve info about combined order'" />
+    <p th:text="'Combined Order ID: ' + ${orderSummary.id}" />
+    
+    <h2>TV</h2>
+    <p th:text="'Order ID: ' + ${orderSummary.tvOrderInfo.id}" />
+    <p th:text="'Cost: ' + ${orderSummary.tvOrderInfo.cost}" />
+    
+    <h2>Internet</h2>
+    <p th:text="'Order ID: ' + ${orderSummary.internetOrderInfo.id}" />
+    <p th:text="'Cost: ' + ${orderSummary.internetOrderInfo.cost}" />
+    
+    <h2>Payment details</h2>
+    <p th:text="'Transaction ID: ' + ${orderSummary.paymentInfo.transactionId}" />
+    <p th:text="'Transaction Date: ' + ${orderSummary.paymentInfo.transactionDate}" />
+    <p th:text="'Payment Card Number: ' + ${orderSummary.paymentInfo.paymentCard.getMaskedNumber}" />
+    <p th:text="'Amount: ' + ${orderSummary.paymentInfo.amount.value} + ' ' + ${orderSummary.paymentInfo.amount.currency}" />
+    
+    <p><a href="/orderMedia">Submit another order</a></p>
+    <p><a href="/getOrder">Find another order</a></p>
+</body>
+</html>

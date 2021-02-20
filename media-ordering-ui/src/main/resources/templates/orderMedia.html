@@ -1,0 +1,39 @@
+<!DOCTYPE HTML>
+<html xmlns:th="https://www.thymeleaf.org">
+<head> 
+    <title>Ordering Media Service</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+	<h1>Ordering Media</h1>
+	<h2>Your address</h2>
+    <form action="#" th:action="@{/orderMedia}" th:object="${order}" method="post">
+        <p>Household Address: <input type="text" th:field="*{household.address}" /></p>
+        <p>Household City: <input type="text" th:field="*{household.city}" /></p>
+        <p>Household Zip Code: <input type="text" th:field="*{household.zipCode}" /></p>
+        
+    	<h2>TV Service</h2>
+        <p>Provider: <input type="text" th:field="*{tvService.provider}" /></p>
+        <p>Type: <input type="text" th:field="*{tvService.type}" /></p>
+        <p>Installment Date: <input type="date" th:field="*{tvInstallmentDate}" /></p>
+        
+    	<h2>Internet Service</h2>
+    	<p>Provider: <input type="text" th:field="*{internetService.provider}" /></p>
+        <p>Broadband: <input type="text" th:field="*{internetService.broadband}" /></p>
+        <p>Speed: <input type="number" th:field="*{internetService.speed}" /></p>
+    	<p>Installment Date: <input type="date" th:field="*{internetInstallmentDate}" /></p>
+    
+	    <h2>Credit/Debit Card</h2>
+	    <p>Name: <input type="text" th:field="*{paymentCard.name}" /></p>
+	    <p>Valid to: <input type="text" th:field="*{paymentCard.validTo}" /></p>
+	    <p>Number: <input type="text" th:field="*{paymentCard.number}" /></p>
+	    
+	    <p>
+	    	<input type="submit" value="Submit" /> 
+	    	<input type="reset" value="Reset" />
+	    </p>
+	    <br/>
+	    <p><a href="/">Back</a></p>
+    </form>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<!DOCTYPE HTML>
+<html xmlns:th="https://www.thymeleaf.org">
+<head> 
+    <title>Get Order Information</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+	<h1>Find your order</h1>
+    <form action="#" th:action="@{/getOrder}" th:object="${order}" method="post">
+	    <p>Enter combined order ID: <input type="text" th:field="*{id}" /></p>
+	    
+	    <p><input type="submit" value="Submit" /></p>
+	    <br/>
+	    <p><a href="/">Back</a></p>
+    </form>
+</body>
+</html>

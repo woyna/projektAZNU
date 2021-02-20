@@ -20,3 +20,9 @@ services:
     image: aznu/payment
     ports:
       - "8082:8082"
+  media-ordering-ui:
+    image: aznu/media-ordering-ui
+    ports:
+      - "8083:8083"
+    environment:
+      GATEWAY: gateway:8090
