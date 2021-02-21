@@ -15,5 +15,9 @@ public class StateMachine {
 		state = stateMachineBuilder.sendEvent(state, processingEvent);
 		return previousState;		
 	}
+	
+	public ProcessingState getState() {
+		return state;
+	}
 
 }

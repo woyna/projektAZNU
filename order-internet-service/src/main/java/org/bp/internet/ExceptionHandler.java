@@ -8,7 +8,6 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.bp.types.Fault;
 import org.bp.types.Household;
-import org.bp.types.InternetBroadband;
 import org.bp.types.InternetOrder;
 import org.bp.types.InternetService;
 

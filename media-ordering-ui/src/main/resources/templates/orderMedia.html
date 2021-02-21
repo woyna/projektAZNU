@@ -13,13 +13,37 @@
         <p>Household Zip Code: <input type="text" th:field="*{household.zipCode}" /></p>
         
     	<h2>TV Service</h2>
-        <p>Provider: <input type="text" th:field="*{tvService.provider}" /></p>
-        <p>Type: <input type="text" th:field="*{tvService.type}" /></p>
+        <p>Provider: 
+        <select th:field="*{tvService.provider}">
+    		<option value="Cyfrowy Polsat">Cyfrowy Polsat</option>
+    		<option value="Canal+">Canal+</option>
+    		<option value="Orange TV">Orange TV</option>
+		</select>
+		</p>
+        <p>Type: 
+        <select th:field="*{tvService.type}">
+    		<option th:each="tvTypeOpt: ${T(org.bp.mediaorderingui.model.TVType).values()}" th:value="${tvTypeOpt}" th:text="${tvTypeOpt}"></option>
+		</select>
+		</p>
         <p>Installment Date: <input type="date" th:field="*{tvInstallmentDate}" /></p>
         
     	<h2>Internet Service</h2>
-    	<p>Provider: <input type="text" th:field="*{internetService.provider}" /></p>
-        <p>Broadband: <input type="text" th:field="*{internetService.broadband}" /></p>
+    	<p>Provider: 
+        <select th:field="*{internetService.provider}">
+        	<option value="Inea">Inea</option>
+        	<option value="Toya">Toya</option>
+        	<option value="UPC">UPC</option>
+        	<option value="Vectra">Vectra</option>
+        	<option value="Orange">Orange</option>
+        	<option value="Netia">Netia</option>
+        	<option value="TK Telekom">TK Telekom</option>
+		</select>
+		</p>
+        <p>Broadband: 
+        <select th:field="*{internetService.broadband}">
+    		<option th:each="internetBroadbandOpt: ${T(org.bp.mediaorderingui.model.InternetBroadband).values()}" th:value="${internetBroadbandOpt}" th:text="${internetBroadbandOpt}"></option>
+		</select>
+		</p>
         <p>Speed: <input type="number" th:field="*{internetService.speed}" /></p>
     	<p>Installment Date: <input type="date" th:field="*{internetInstallmentDate}" /></p>
     

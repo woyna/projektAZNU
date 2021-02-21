@@ -2,6 +2,11 @@ package org.bp.media.exceptions;
 
 public class InternetServiceException extends Exception {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	public InternetServiceException() {
 	}
 

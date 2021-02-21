@@ -2,6 +2,11 @@ package org.bp.media.exceptions;
 
 public class TVOrderException extends Exception {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	public TVOrderException() {
 	}
 

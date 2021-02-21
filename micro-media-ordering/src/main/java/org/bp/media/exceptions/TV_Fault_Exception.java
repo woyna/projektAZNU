@@ -1,5 +1,5 @@
 
-package org.bp.media.model;
+package org.bp.media.exceptions;
 
 import javax.xml.ws.WebFault;
 
@@ -13,7 +13,11 @@ import javax.xml.ws.WebFault;
 @WebFault(name = "Fault", targetNamespace = "http://tv.bp.org/")
 public class TV_Fault_Exception extends Exception {
 
-    private Fault fault;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private Fault fault;
 
     public TV_Fault_Exception() {
         super();

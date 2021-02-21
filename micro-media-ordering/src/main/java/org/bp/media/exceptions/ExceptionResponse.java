@@ -10,13 +10,10 @@
  * Do not edit the class manually.
  */
 
-package org.bp.media.model;
+package org.bp.media.exceptions;
 
 import java.util.Objects;
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
 import java.time.OffsetDateTime;
 /**
  * ExceptionResponse
@@ -27,8 +24,28 @@ public class ExceptionResponse {
   @JsonProperty("timestamp")
   private OffsetDateTime timestamp = null;
 
+  @JsonProperty("code")
+  private int code;
+  
   @JsonProperty("message")
   private String message = null;
+  
+  public ExceptionResponse code(int code) {
+	    this.code= code;
+	    return this;
+	  }
+
+	   /**
+	   * Get code
+	   * @return code
+	  **/
+	  public int getCode() {
+	    return code;
+	  }
+
+	  public void setCode(int code) {
+	    this.code = code;
+	  }
 
   public ExceptionResponse timestamp(OffsetDateTime timestamp) {
     this.timestamp = timestamp;
@@ -75,7 +92,8 @@ public class ExceptionResponse {
     }
     ExceptionResponse exceptionResponse = (ExceptionResponse) o;
     return Objects.equals(this.timestamp, exceptionResponse.timestamp) &&
-        Objects.equals(this.message, exceptionResponse.message);
+    		Objects.equals(this.code, exceptionResponse.code) && 
+    		Objects.equals(this.message, exceptionResponse.message);
   }
 
   @Override
@@ -90,6 +108,7 @@ public class ExceptionResponse {
     sb.append("class ExceptionResponse {\n");
     
     sb.append("    timestamp: ").append(toIndentedString(timestamp)).append("\n");
+    sb.append("    code: ").append(toIndentedString(code)).append("\n");
     sb.append("    message: ").append(toIndentedString(message)).append("\n");
     sb.append("}");
     return sb.toString();

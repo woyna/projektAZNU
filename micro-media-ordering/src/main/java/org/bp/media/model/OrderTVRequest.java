@@ -13,13 +13,8 @@
 package org.bp.media.model;
 
 import java.util.Objects;
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
 import java.time.OffsetDateTime;
-import org.bp.media.model.Household;
-import org.bp.media.model.TVService;
 /**
  * OrderTVRequest
  */

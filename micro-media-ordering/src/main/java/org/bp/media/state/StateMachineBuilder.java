@@ -1,6 +1,5 @@
 package org.bp.media.state;
 
-import java.util.EnumMap;
 import java.util.HashMap;
 
 public class StateMachineBuilder {

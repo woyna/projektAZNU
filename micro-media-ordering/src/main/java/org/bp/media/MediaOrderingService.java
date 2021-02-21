@@ -2,9 +2,7 @@ package org.bp.media;
 
 import static org.apache.camel.model.rest.RestParamType.body;
 
-import java.io.File;
 import java.math.BigDecimal;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
@@ -13,46 +11,36 @@ import javax.xml.namespace.QName;
 
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.language.bean.Bean;
 import org.apache.camel.model.dataformat.JsonLibrary;
 import org.apache.camel.model.rest.RestBindingMode;
 import org.apache.camel.model.rest.RestParamType;
-import org.apache.camel.util.json.JsonObject;
 import org.bp.media.model.OrderMediaRequest;
 import org.bp.media.model.OrderSummary;
 import org.bp.media.model.PaymentRequest;
 import org.bp.media.model.PaymentResponse;
 import org.bp.media.model.TVOrder;
-import org.bp.media.model.TVType;
-import org.bp.media.model.Internet_Fault_Exception;
 import org.bp.media.clients.OrderInternetService;
 import org.bp.media.clients.OrderInternetServiceService;
 import org.bp.media.clients.OrderTvService;
 import org.bp.media.clients.OrderTvServiceService;
-import org.bp.media.exceptions.InternetServiceException;
-import org.bp.media.exceptions.TVOrderException;
+import org.bp.media.exceptions.ExceptionResponse;
+import org.bp.media.exceptions.Fault;
+import org.bp.media.exceptions.Internet_Fault_Exception;
+import org.bp.media.exceptions.TV_Fault_Exception;
 import org.bp.media.model.Amount;
-import org.bp.media.model.ExceptionResponse;
-import org.bp.media.model.TV_Fault_Exception;
-import org.bp.media.model.Household;
-import org.bp.media.model.InternetBroadband;
 import org.bp.media.model.InternetOrder;
 import org.bp.media.model.OrderInfo;
-import org.bp.media.model.Utils;
 import org.bp.media.state.ProcessingEvent;
 import org.bp.media.state.ProcessingState;
 import org.bp.media.state.StateService;
-import org.bp.media.model.PaymentCard;
+import org.bp.media.exceptions.PaymentException;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import io.swagger.util.Json;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 public class MediaOrderingService extends RouteBuilder {
@@ -99,6 +87,7 @@ public class MediaOrderingService extends RouteBuilder {
 	public void configure() throws Exception {
 		orderTVExceptionHandlers();
 		orderInternetExceptionHandlers();
+		paymentExceptionHandlers();
 		gateway();
 		tv();
 		internet();
@@ -115,12 +104,16 @@ public class MediaOrderingService extends RouteBuilder {
 				.produces("application/json").post("/order").description("Order media services")
 				.type(OrderMediaRequest.class).outType(OrderSummary.class).param().name("body").type(body)
 				.description("Media services to order").endParam().responseMessage().code(200)
-				.message("Media services successfully ordered").endResponseMessage().to("direct:orderMedia");
+				.message("Media services successfully ordered").endResponseMessage().responseMessage().code(400)
+				.responseModel(ExceptionResponse.class).message("Media services order exception").endResponseMessage()
+				.to("direct:orderMedia");
 
 		rest("/media").produces("application/json").get("/order/{orderId}").description("Get media order info")
 				.outType(OrderSummary.class).param().name("orderId").type(RestParamType.path)
 				.description("Media order ID to get").endParam().responseMessage().code(200)
-				.message("Media services successfully get").endResponseMessage().to("direct:getOrders");
+				.message("Media services successfully get").endResponseMessage().responseMessage().code(400)
+				.responseModel(ExceptionResponse.class).message("Media services get order exception")
+				.endResponseMessage().to("direct:getOrders");
 
 		from("direct:orderMedia").routeId("orderMedia").log("orderMedia fired").process((exchange) -> {
 			exchange.getMessage().setHeader("orderMediaId", orderIdentifierService.getOrderIdentifier());
@@ -129,12 +122,10 @@ public class MediaOrderingService extends RouteBuilder {
 		from("direct:getOrders").routeId("getOrders").log("getOrders fired").to("direct:MediaGetRequest");
 
 		from("direct:MediaOrderRequest").routeId("MediaOrderRequest").log("brokerTopic fired").marshal().json()
-				.multicast()
-				.stopOnException()
-				.to("direct:orderTV", "direct:orderInternet", "direct:registerPayment");
+				.multicast().stopOnException().to("direct:orderTV", "direct:orderInternet", "direct:registerPayment");
 
 		from("direct:MediaGetRequest").routeId("MediaGetRequest").log("brokerTopic fired").marshal().json().multicast()
-				.parallelProcessing().to("direct:getTVOrder", "direct:getInternetOrder", "direct:getPaymentInfo");
+				.stopOnException().to("direct:getTVOrder", "direct:getInternetOrder", "direct:getPaymentInfo");
 
 		from("direct:returnOrderSummary").routeId("returnOrderSummary").process((exchange) -> {
 			String mediaOrderId = exchange.getMessage().getHeader("orderMediaId", String.class);
@@ -195,8 +186,7 @@ public class MediaOrderingService extends RouteBuilder {
 							System.out.println("orderTV.result=" + orderInfo);
 
 						} catch (TV_Fault_Exception e) {
-							System.out.println("Expected exception: Fault has occurred.");
-							System.out.println(e.toString());
+							throw e;
 						}
 						tvOrdersMappings.put(mediaOrderId, Integer.valueOf(orderInfo.getId()));
 						orderGetterService.addOrderInfo(mediaOrderId, orderInfo, "tv");
@@ -213,13 +203,34 @@ public class MediaOrderingService extends RouteBuilder {
 				.json(JsonLibrary.Jackson, ExceptionResponse.class).choice()
 				.when(header("serviceType").isNotEqualTo("tv")).process((exchange) -> {
 					String mediaOrderId = exchange.getMessage().getHeader("orderMediaId", String.class);
-					ProcessingState previousState = tvStateService.sendEvent(mediaOrderId, ProcessingEvent.CANCEL);
-					exchange.getMessage().setHeader("previousState", previousState);
+					if (tvStateService.getCurrentState(mediaOrderId) != ProcessingState.CANCELLED) {
+						ProcessingState previousState = tvStateService.sendEvent(mediaOrderId, ProcessingEvent.CANCEL);
+						exchange.getMessage().setHeader("previousState", previousState);
+					}
 				}).choice().when(header("previousState").isEqualTo(ProcessingState.FINISHED))
 				.to("direct:orderTVCompensationAction").endChoice().endChoice();
 
-		from("direct:orderTVCompensationAction").routeId("orderTVCompensationAction").log("fired orderTVCompensation")
-				.to("stream:out");
+		from("direct:orderTVCompensationAction").routeId("orderTVCompensationAction")
+				.log("fired orderTVCompensationAction").process((exchange) -> {
+					String mediaOrderId = exchange.getMessage().getHeader("orderMediaId", String.class);
+					URL wsdlURL = new URL("http://" + mediaTVServer + "/soap-api/service/tv?wsdl");
+
+					QName SERVICE_NAME = new QName("http://tv.bp.org/", "OrderTvServiceService");
+					OrderTvServiceService ss = new OrderTvServiceService(wsdlURL, SERVICE_NAME);
+					OrderTvService port = ss.getOrderTvServicePort();
+
+					Integer orderId = tvOrdersMappings.get(mediaOrderId);
+					if (orderId == null) {
+						Fault fault = new Fault(80, "There is no TV order assosciated with this combined order", null);
+						TV_Fault_Exception exception = new TV_Fault_Exception(null, fault);
+						throw exception;
+					}
+					try {
+						port.cancelOrder(orderId);
+					} catch (TV_Fault_Exception e) {
+						throw e;
+					}
+				});
 
 		from("direct:getTVOrder").routeId("getOrderTV").log("fired getOrderTV").process((exchange) -> {
 			String mediaOrderId = exchange.getMessage().getHeader("orderId", String.class);
@@ -230,14 +241,19 @@ public class MediaOrderingService extends RouteBuilder {
 			OrderTvService port = ss.getOrderTvServicePort();
 
 			OrderInfo orderInfo = new OrderInfo();
-			orderInfo.setId(String.valueOf(tvOrdersMappings.get(mediaOrderId)));
+			String orderId = String.valueOf(tvOrdersMappings.get(mediaOrderId));
+			if (orderId == "null") {
+				Fault fault = new Fault(80, "There is no TV order assosciated with this combined order", null);
+				TV_Fault_Exception exception = new TV_Fault_Exception(null, fault);
+				throw exception;
+			}
+			orderInfo.setId(orderId);
 			try {
 				orderInfo = port.getOrderInfo(orderInfo);
 				System.out.println("getTVOrder.result=" + orderInfo);
 
 			} catch (TV_Fault_Exception e) {
-				System.out.println("Expected exception: Fault has occurred.");
-				System.out.println(e.toString());
+				throw e;
 			}
 			exchange.getMessage().setBody(orderInfo);
 		}).marshal().json().to("stream:out").setHeader("serviceType", constant("tv")).to("direct:GetOrdersTopic");
@@ -266,8 +282,7 @@ public class MediaOrderingService extends RouteBuilder {
 							System.out.println("orderInternet.result=" + orderInfo);
 
 						} catch (Internet_Fault_Exception e) {
-							System.out.println("Expected exception: Fault has occurred.");
-							System.out.println(e.toString());
+							throw e;
 						}
 
 						internetOrdersMappings.put(mediaOrderId, Integer.valueOf(orderInfo.getId()));
@@ -285,14 +300,35 @@ public class MediaOrderingService extends RouteBuilder {
 				.unmarshal().json(JsonLibrary.Jackson, ExceptionResponse.class).choice()
 				.when(header("serviceType").isNotEqualTo("internet")).process((exchange) -> {
 					String mediaOrderId = exchange.getMessage().getHeader("orderMediaId", String.class);
-					ProcessingState previousState = internetStateService.sendEvent(mediaOrderId,
-							ProcessingEvent.CANCEL);
-					exchange.getMessage().setHeader("previousState", previousState);
+					if (internetStateService.getCurrentState(mediaOrderId) != ProcessingState.CANCELLED) {
+						ProcessingState previousState = internetStateService.sendEvent(mediaOrderId,
+								ProcessingEvent.CANCEL);
+						exchange.getMessage().setHeader("previousState", previousState);
+					}
 				}).choice().when(header("previousState").isEqualTo(ProcessingState.FINISHED))
 				.to("direct:orderInternetCompensationAction").endChoice().endChoice();
 
 		from("direct:orderInternetCompensationAction").routeId("orderInternetCompensationAction")
-				.log("fired orderInternetCompensationAction").to("stream:out");
+				.log("fired orderInternetCompensationAction").process((exchange) -> {
+					String mediaOrderId = exchange.getMessage().getHeader("orderMediaId", String.class);
+					URL wsdlURL = new URL("http://" + mediaInternetServer + "/soap-api/service/internet?wsdl");
+
+					QName SERVICE_NAME = new QName("http://internet.bp.org/", "OrderInternetServiceService");
+					OrderInternetServiceService ss = new OrderInternetServiceService(wsdlURL, SERVICE_NAME);
+					OrderInternetService port = ss.getOrderInternetServicePort();
+
+					Integer orderId = internetOrdersMappings.get(mediaOrderId);
+					if (orderId == null) {
+						Fault fault = new Fault(80, "There is no Internet order assosciated with this combined order", null);
+						Internet_Fault_Exception exception = new Internet_Fault_Exception(null, fault);
+						throw exception;
+					}
+					try {
+						port.cancelOrder(orderId);
+					} catch (Internet_Fault_Exception e) {
+						throw e;
+					}
+				});
 
 		from("direct:getInternetOrder").routeId("getOrderInternet").log("fired getOrderInternet")
 				.process((exchange) -> {
@@ -304,14 +340,20 @@ public class MediaOrderingService extends RouteBuilder {
 					OrderInternetService port = ss.getOrderInternetServicePort();
 
 					OrderInfo orderInfo = new OrderInfo();
-					orderInfo.setId(String.valueOf(internetOrdersMappings.get(mediaOrderId)));
+					String orderId = String.valueOf(internetOrdersMappings.get(mediaOrderId));
+					if (orderId == "null") {
+						Fault fault = new Fault(80, "There is no Internet order assosciated with this combined order",
+								null);
+						Internet_Fault_Exception exception = new Internet_Fault_Exception(null, fault);
+						throw exception;
+					}
+					orderInfo.setId(orderId);
 					try {
 						orderInfo = port.getOrderInfo(orderInfo);
 						System.out.println("getInternetOrder.result=" + orderInfo);
 
 					} catch (Internet_Fault_Exception e) {
-						System.out.println("Expected exception: Fault has occurred.");
-						System.out.println(e.toString());
+						throw e;
 					}
 					exchange.getMessage().setBody(orderInfo);
 				}).marshal().json().to("stream:out").setHeader("serviceType", constant("internet"))
@@ -359,49 +401,73 @@ public class MediaOrderingService extends RouteBuilder {
 				paymentResponse = re.getBody();
 			} catch (HttpClientErrorException e) { // catch 4xx response codes
 				log.error(e.getResponseBodyAsString());
+				throw e;
 			}
 			paymentTransactionsMappings.put(mediaOrderId, Integer.valueOf(paymentResponse.getTransactionId()));
 			orderGetterService.addPaymentInfo(mediaOrderId, paymentResponse);
 			exchange.getMessage().setBody(paymentResponse);
 		}).marshal().json().to("stream:out").to("direct:returnOrderSummary");
-		
+
 		from("direct:getPaymentInfo").routeId("getPayment").log("fired getPayment").process((exchange) -> {
 			String mediaOrderId = exchange.getMessage().getHeader("orderId", String.class);
 			String transactionId = String.valueOf(paymentTransactionsMappings.get(mediaOrderId));
 
-			PaymentResponse paymentResponse = new PaymentResponse();
-			try {
-				ResponseEntity<PaymentResponse> re = restTemplate.getForEntity(
-						"http://" + mediaPaymentServer + "/payment/" + transactionId, PaymentResponse.class);
-				paymentResponse = re.getBody();
-			} catch (HttpClientErrorException e) { // catch 4xx response codes
-				log.error(e.getResponseBodyAsString());
+			if (transactionId != "null") {
+				PaymentResponse paymentResponse = new PaymentResponse();
+				try {
+					ResponseEntity<PaymentResponse> re = restTemplate.getForEntity(
+							"http://" + mediaPaymentServer + "/payment/" + transactionId, PaymentResponse.class);
+					paymentResponse = re.getBody();
+				} catch (HttpClientErrorException e) { // catch 4xx response codes
+					log.error(e.getResponseBodyAsString());
+					throw e;
+				}
+				exchange.getMessage().setBody(paymentResponse);
 			}
-
-			exchange.getMessage().setBody(paymentResponse);
 		}).marshal().json().to("stream:out").to("direct:GetPaymentTopic");
 	}
 
 	private void orderTVExceptionHandlers() {
-		onException(TVOrderException.class).process((exchange) -> {
+		onException(TV_Fault_Exception.class).process((exchange) -> {
 			ExceptionResponse er = new ExceptionResponse();
 			er.setTimestamp(OffsetDateTime.now());
-			Exception cause = exchange.getProperty(Exchange.EXCEPTION_CAUGHT, Exception.class);
-			er.setMessage(cause.getMessage());
+			TV_Fault_Exception cause = exchange.getProperty(Exchange.EXCEPTION_CAUGHT, TV_Fault_Exception.class);
+			er.setCode(cause.getFaultInfo().getCode());
+			er.setMessage(cause.getFaultInfo().getText());
+			exchange.getMessage().setHeader(Exchange.HTTP_RESPONSE_CODE, 400);
 			exchange.getMessage().setBody(er);
-		}).marshal().json().to("stream:out").setHeader("serviceType", constant("tv")).to("direct:TVOrderFail")
-				.handled(true);
+		}).marshal().json().to("stream:out").setHeader("serviceType", constant("tv")).to("direct:TVOrderFail").marshal()
+				.json().to("direct:InternetOrderFail").handled(true);
 	}
 
 	private void orderInternetExceptionHandlers() {
-		onException(InternetServiceException.class).process((exchange) -> {
+		onException(Internet_Fault_Exception.class).process((exchange) -> {
 			ExceptionResponse er = new ExceptionResponse();
 			er.setTimestamp(OffsetDateTime.now());
-			Exception cause = exchange.getProperty(Exchange.EXCEPTION_CAUGHT, Exception.class);
-			er.setMessage(cause.getMessage());
+			Internet_Fault_Exception cause = exchange.getProperty(Exchange.EXCEPTION_CAUGHT,
+					Internet_Fault_Exception.class);
+			er.setCode(cause.getFaultInfo().getCode());
+			er.setMessage(cause.getFaultInfo().getText());
+			exchange.getMessage().setHeader(Exchange.HTTP_RESPONSE_CODE, 400);
 			exchange.getMessage().setBody(er);
 		}).marshal().json().to("stream:out").setHeader("serviceType", constant("internet"))
-				.to("direct:InternetOrderFail").handled(true);
+				.to("direct:InternetOrderFail").marshal().json().to("direct:TVOrderFail").handled(true);
+	}
+
+	private void paymentExceptionHandlers() {
+		onException(HttpClientErrorException.class).process((exchange) -> {
+			ExceptionResponse er = new ExceptionResponse();
+			er.setTimestamp(OffsetDateTime.now());
+			HttpClientErrorException cause = exchange.getProperty(Exchange.EXCEPTION_CAUGHT,
+					HttpClientErrorException.class);
+			PaymentException paymentException = new ObjectMapper().readValue(cause.getResponseBodyAsString(),
+					PaymentException.class);
+			er.setCode(99);
+			er.setMessage(paymentException.getMessage());
+			exchange.getMessage().setHeader(Exchange.HTTP_RESPONSE_CODE, 400);
+			exchange.getMessage().setBody(er);
+		}).marshal().json().to("stream:out").setHeader("serviceType", constant("payment"))
+				.to("direct:InternetOrderFail").marshal().json().to("direct:TVOrderFail").handled(true);
 	}
 
 }

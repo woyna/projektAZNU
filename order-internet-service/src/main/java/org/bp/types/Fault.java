@@ -3,7 +3,11 @@ package org.bp.types;
 
 public class Fault extends Exception {
 
-    protected int code;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	protected int code;
     protected String text;
     
 	public int getCode() {

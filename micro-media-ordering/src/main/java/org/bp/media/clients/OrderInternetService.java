@@ -8,9 +8,9 @@ import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.ws.RequestWrapper;
 import javax.xml.ws.ResponseWrapper;
 
+import org.bp.media.exceptions.Internet_Fault_Exception;
 import org.bp.media.model.InternetObjectFactory;
 import org.bp.media.model.InternetOrder;
-import org.bp.media.model.Internet_Fault_Exception;
 import org.bp.media.model.OrderInfo;
 
 /**

@@ -18,16 +18,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-import java.time.OffsetDateTime;
-
-import org.bp.mediaorderingui.model.Household;
-import org.bp.mediaorderingui.model.InternetService;
-import org.bp.mediaorderingui.model.PaymentCard;
-import org.bp.mediaorderingui.model.TVService;
 
 /**
  * OrderMediaRequest

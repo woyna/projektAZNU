@@ -16,12 +16,7 @@ import java.util.Objects;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-import org.bp.media.model.Household;
-import org.bp.media.model.InternetService;
 /**
  * OrderInternetRequest
  */

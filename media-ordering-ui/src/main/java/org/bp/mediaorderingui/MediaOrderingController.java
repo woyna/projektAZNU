@@ -11,6 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.bp.mediaorderingui.model.ExceptionResponse;
 import org.bp.mediaorderingui.model.OrderMediaRequest;
 import org.bp.mediaorderingui.model.OrderSummary;
 
@@ -20,10 +23,11 @@ public class MediaOrderingController {
 	@org.springframework.beans.factory.annotation.Value("${gateway}")
 	private String gateway;
 	
-	String mediaURI = "http://" + gateway + "/api/media/order";
+	String mediaURI;
 
 	@Bean
 	public RestTemplate restTemplate(RestTemplateBuilder builder) {
+		mediaURI = "http://" + gateway + "/api/media/order";
 		return builder.build();
 	}
 	
@@ -58,7 +62,16 @@ public class MediaOrderingController {
 			return "result";
 		} catch (HttpClientErrorException e) {
 			System.out.println(e.getMessage());
-			return "error";
+			ExceptionResponse exceptionResponse = null;
+			try {
+				exceptionResponse = new ObjectMapper().readValue(e.getResponseBodyAsString(), ExceptionResponse.class);	
+			} catch (Exception e2) {
+				exceptionResponse = new ExceptionResponse();
+				exceptionResponse.setCode(70);
+				exceptionResponse.setMessage("Unknown error");
+			}
+			model.addAttribute("fault", exceptionResponse);
+			return "fault";
 		}
 	}
 	
@@ -72,7 +85,16 @@ public class MediaOrderingController {
 			return "result";
 		} catch (HttpClientErrorException e) {
 			System.out.println(e.getMessage());
-			return "error";
+			ExceptionResponse exceptionResponse = null;
+			try {
+				exceptionResponse = new ObjectMapper().readValue(e.getResponseBodyAsString(), ExceptionResponse.class);	
+			} catch (Exception e2) {
+				exceptionResponse = new ExceptionResponse();
+				exceptionResponse.setCode(70);
+				exceptionResponse.setMessage("Unknown error");
+			}
+			model.addAttribute("fault", exceptionResponse);
+			return "fault";
 		}
 	}
 }

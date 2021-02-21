@@ -1,5 +1,5 @@
 
-package org.bp.media.model;
+package org.bp.media.exceptions;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -38,6 +38,16 @@ public class Fault {
     protected Integer code;
     protected String text;
     protected String message;
+    
+    public Fault() {
+    	
+    }
+    
+    public Fault(Integer code, String text, String message) {
+    	this.code = code;
+    	this.text = text;
+    	this.message = message;
+    }
 
     /**
      * Gets the value of the code property.

@@ -2,9 +2,6 @@ package org.bp.media;
 
 
 
-import org.apache.camel.CamelContext;
-import org.apache.camel.impl.saga.InMemorySagaService;
-import org.apache.camel.spring.boot.CamelContextConfiguration;
 import org.bp.media.state.ProcessingEvent;
 import org.bp.media.state.ProcessingState;
 import org.bp.media.state.StateMachineBuilder;

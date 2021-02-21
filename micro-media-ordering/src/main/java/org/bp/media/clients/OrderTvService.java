@@ -8,8 +8,8 @@ import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.ws.RequestWrapper;
 import javax.xml.ws.ResponseWrapper;
 
-import org.bp.media.model.TV_Fault_Exception;
 import org.bp.media.model.TVObjectFactory;
+import org.bp.media.exceptions.TV_Fault_Exception;
 import org.bp.media.model.OrderInfo;
 import org.bp.media.model.TVOrder;
 

@@ -1,5 +1,5 @@
 
-package org.bp.media.model;
+package org.bp.media.exceptions;
 
 import javax.xml.ws.WebFault;
 
@@ -13,7 +13,11 @@ import javax.xml.ws.WebFault;
 @WebFault(name = "Fault", targetNamespace = "http://internet.bp.org/")
 public class Internet_Fault_Exception extends Exception {
 
-    private Fault fault;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private Fault fault;
 
     public Internet_Fault_Exception() {
         super();

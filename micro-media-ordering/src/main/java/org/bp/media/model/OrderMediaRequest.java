@@ -14,19 +14,9 @@ package org.bp.media.model;
 
 import java.util.Objects;
 
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-import java.time.OffsetDateTime;
-import org.bp.media.model.Household;
-import org.bp.media.model.InternetService;
-import org.bp.media.model.PaymentCard;
-import org.bp.media.model.TVService;
 
 /**
  * OrderMediaRequest
@@ -88,8 +78,8 @@ public class OrderMediaRequest {
 		this.tvService = tvService;
 	}
 
-	public OrderMediaRequest tvInstallmentDate(String tvInstallmentDate) throws DatatypeConfigurationException {
-		this.tvInstallmentDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(tvInstallmentDate);
+	public OrderMediaRequest tvInstallmentDate(XMLGregorianCalendar tvInstallmentDate) {
+		this.tvInstallmentDate = tvInstallmentDate;
 		return this;
 	}
 
@@ -102,8 +92,8 @@ public class OrderMediaRequest {
 		return tvInstallmentDate;
 	}
 
-	public void setTvInstallmentDate(String tvInstallmentDate) throws DatatypeConfigurationException {
-		this.tvInstallmentDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(tvInstallmentDate);
+	public void setTvInstallmentDate(XMLGregorianCalendar tvInstallmentDate) {
+		this.tvInstallmentDate = tvInstallmentDate;
 	}
 
 	public OrderMediaRequest internetService(InternetService internetService) {
@@ -124,9 +114,8 @@ public class OrderMediaRequest {
 		this.internetService = internetService;
 	}
 
-	public OrderMediaRequest internetInstallmentDate(String internetInstallmentDate)
-			throws DatatypeConfigurationException {
-		this.internetInstallmentDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(internetInstallmentDate);
+	public OrderMediaRequest internetInstallmentDate(XMLGregorianCalendar internetInstallmentDate) {
+		this.internetInstallmentDate = internetInstallmentDate;
 		return this;
 	}
 
@@ -139,8 +128,8 @@ public class OrderMediaRequest {
 		return internetInstallmentDate;
 	}
 
-	public void setInternetInstallmentDate(String internetInstallmentDate) throws DatatypeConfigurationException {
-		this.internetInstallmentDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(internetInstallmentDate);
+	public void setInternetInstallmentDate(XMLGregorianCalendar internetInstallmentDate) {
+		this.internetInstallmentDate = internetInstallmentDate;
 	}
 
 	public OrderMediaRequest paymentCard(PaymentCard paymentCard) {

@@ -3,12 +3,6 @@ package org.bp.media.state;
 
 import java.util.HashMap;
 
-import javax.annotation.PostConstruct;
-
-import org.bp.media.model.OrderMediaRequest;
-import org.bp.media.model.OrderInfo;
-import org.springframework.stereotype.Service;
-
 
 public class StateService {
 	private HashMap<String, StateMachine> processingStates=new HashMap<>();
@@ -29,8 +23,15 @@ public class StateService {
 				processingStates.put(orderId, stateMachine);
 			}
 		}
-		return stateMachine.sendEvent(event);
-		
+		return stateMachine.sendEvent(event);	
+	}
+	
+	public ProcessingState getCurrentState(String orderId) {
+		StateMachine stateMachine = processingStates.get(orderId);
+		if (stateMachine == null) {
+			return ProcessingState.NONE;
+		}
+		return stateMachine.getState();
 	}
 
 	public void removeState(String orderId) {
